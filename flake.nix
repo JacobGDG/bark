@@ -11,7 +11,11 @@
           name = "bark-devShell";
           packages = with pkgs; [
             go
+            gopls
           ];
+          shellHook = ''
+          export LOG_LEVEL=debug
+          '';
         };
       }
     );
