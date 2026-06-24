@@ -1,10 +1,16 @@
 package cli
 
 import (
+	"github.com/JacobGDG/bark/config"
 	"github.com/spf13/cobra"
 )
 
-func NewRootCommand(version string) *cobra.Command {
+func NewRootCommand(version string) (*cobra.Command, error) {
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, err
+	}
+
 	rootCommand := &cobra.Command{
 		Use:     "bark",
 		Version: version,
@@ -12,7 +18,7 @@ func NewRootCommand(version string) *cobra.Command {
 	}
 
 	rootCommand.AddCommand(
-		NewCloneCommand(),
+		NewCloneCommand(cfg),
 		// add - to create a new worktree from within a repo and create a tmux session
 		//     - --stay skip the session creation
 		// switch - start or switch to a session focussed on a given worktree
@@ -29,5 +35,5 @@ func NewRootCommand(version string) *cobra.Command {
 		//				- likely used to inform other commands
 	)
 
-	return rootCommand
+	return rootCommand, nil
 }

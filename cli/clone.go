@@ -3,10 +3,11 @@ package cli
 import (
 	"fmt"
 
+	"github.com/JacobGDG/bark/config"
 	"github.com/spf13/cobra"
 )
 
-func NewCloneCommand() *cobra.Command {
+func NewCloneCommand(cfg *config.Config) *cobra.Command {
 	return &cobra.Command{
 		Use:   "clone",
 		Short: "Clone repo into worktrees root",
@@ -16,10 +17,8 @@ func NewCloneCommand() *cobra.Command {
   - .git/   a --bare clone
   - main/   the default branch
 				`,
-		Run: todo,
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(cfg.WorktreeRootDir)
+		},
 	}
-}
-
-func todo(cmd *cobra.Command, args []string) {
-	fmt.Println("hello")
 }

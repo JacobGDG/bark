@@ -34,6 +34,11 @@ func main() {
 	// slog.Warn("Warning")
 	// slog.Error("Error")
 
-	cmd := cli.NewRootCommand("v0.0.1")
+	cmd, err := cli.NewRootCommand("v0.0.1")
+	if err != nil {
+		slog.Error("failed to start", "err", err)
+		os.Exit(1)
+	}
+
 	cmd.Execute()
 }
