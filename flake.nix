@@ -13,9 +13,7 @@
             go
             gopls
           ];
-          shellHook = ''
-          export LOG_LEVEL=debug
-          '';
+          env.LOG_LEVEL = "error";
         };
       }
     );

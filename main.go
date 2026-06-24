@@ -1,17 +1,16 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 	"os"
 	"strings"
+
+	"github.com/JacobGDG/bark/cli"
 )
 
 func init() {
 	env := os.Getenv("LOG_LEVEL")
 	handlerOptions := &slog.HandlerOptions{}
-
-	fmt.Println(env)
 
 	switch strings.ToLower(env) {
 	case "debug":
@@ -30,8 +29,11 @@ func init() {
 }
 
 func main() {
-	slog.Debug("Debug")
-	slog.Info("Information")
-	slog.Warn("Warning")
-	slog.Error("Error")
+	// slog.Debug("Debug")
+	// slog.Info("Information")
+	// slog.Warn("Warning")
+	// slog.Error("Error")
+
+	cmd := cli.NewRootCommand("v0.0.1")
+	cmd.Execute()
 }
