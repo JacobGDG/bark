@@ -11,5 +11,23 @@ func NewRootCommand(version string) *cobra.Command {
 		Short:   "Git Worktree manager",
 	}
 
+	rootCommand.AddCommand(
+		NewCloneCommand(),
+		// add - to create a new worktree from within a repo and create a tmux session
+		//     - --stay skip the session creation
+		// switch - start or switch to a session focussed on a given worktree
+		// purge - Remove all worktrees whos branches have been merged
+		//			 - --all do this for all pulled repos
+		// update - git pull the current repo and all branches
+		//				- --all for all repos
+		// tui - a UI for managing worktrees. depending on location called it will change behaviour
+		//     - if in worktree root it will show all, with keymaps to call clone, switch ect
+		//		 - if in repo root, show worktrees for given repo
+		//		 - --tmux allows opening a popup for either of the above
+		// status - fetch stats about a current/given repo
+		//        - if outdated, age, local changes, no. worktrees etc
+		//				- likely used to inform other commands
+	)
+
 	return rootCommand
 }
