@@ -2,6 +2,7 @@ package git
 
 import (
 	"fmt"
+	"log/slog"
 	"path"
 	"strings"
 
@@ -26,12 +27,27 @@ func New() (*Client, error) {
 func (c *Client) Clone(url, dest string, args ...string) error {
 	_, err := c.git.Run(append([]string{"clone", url, dest}, args...)...)
 
+	slog.Debug("Repository cloned", "url", url)
+	slog.Debug("Repository cloned", "destination", dest)
+
 	return err
 }
 
-// WorktreeAdd adds a worktree for branch at the given path inside repoPath.
-func (c *Client) WorktreeAdd(repoPath, branch string) error {
-	_, err := c.git.Run("-C", repoPath, "worktree", "add", branch)
+// WorktreeAdd adds a worktree at dest from repoPath, passing any extra args after the positional arguments.
+func (c *Client) WorktreeAdd(repoPath, dest string, args ...string) error {
+	_, err := c.git.Run(append([]string{"-C", repoPath, "worktree", "add", dest}, args...)...)
+
+	slog.Debug("Worktree added", "repoPath", repoPath)
+	slog.Debug("Worktree added", "destination", dest)
+
+	return err
+}
+
+// SetRemoteHead resolves and sets refs/remotes/origin/HEAD for the repo at repoPath.
+func (c *Client) SetRemoteHead(repoPath string) error {
+	_, err := c.git.Run("-C", repoPath, "remote", "set-head", "origin", "--auto")
+
+	slog.Debug("Remote head set", "repoPath", repoPath)
 
 	return err
 }
@@ -42,5 +58,8 @@ func (c *Client) DefaultBranch(repoPath string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("could not determine default branch: %w", err)
 	}
+
+	slog.Debug("Default branch set", "repoPath", repoPath)
+
 	return path.Base(strings.TrimSpace(ref)), nil
 }
