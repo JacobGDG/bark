@@ -22,9 +22,9 @@ func New() (*Client, error) {
 	return &Client{git: g}, nil
 }
 
-// Clone creates a bare clone of url at dest.
-func (c *Client) Clone(url, dest string) error {
-	_, err := c.git.Run("clone", "--bare", url, dest)
+// Clone clones url to dest, passing any extra args after the positional arguments.
+func (c *Client) Clone(url, dest string, args ...string) error {
+	_, err := c.git.Run(append([]string{"clone", url, dest}, args...)...)
 
 	return err
 }
