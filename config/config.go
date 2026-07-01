@@ -23,6 +23,5 @@ func Load() (*Config, error) {
 }
 
 func (c *Config) log() {
-	slog.Info("config loaded")
-	slog.Debug("config values", "worktree_root_dir", c.WorktreeRootDir)
+	slog.Debug("config loaded", "worktree_root_dir", c.WorktreeRootDir)
 }

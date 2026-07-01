@@ -30,8 +30,7 @@ func NewCloneCommand(cfg *config.Config) *cobra.Command {
 			}
 
 			repoPath := filepath.Join(cfg.WorktreeRootDir, repoName)
-			bareClone := filepath.Join(repoPath, ".git")
-
+			// TODO: ensure direcotry does not exist
 			if err := os.MkdirAll(repoPath, 0755); err != nil {
 				return fmt.Errorf("could not create repo directory: %w", err)
 			}
@@ -41,21 +40,17 @@ func NewCloneCommand(cfg *config.Config) *cobra.Command {
 				return err
 			}
 
-			if err := g.Clone(url, bareClone, "--bare"); err != nil {
+			if err := g.Clone(url, filepath.Join(repoPath, ".git"), "--bare"); err != nil {
 				return err
 			}
 
-			if err := g.SetRemoteHead(bareClone); err != nil {
-				return err
-			}
-
-			branch, err := g.DefaultBranch(bareClone)
+			branch, err := g.DefaultBranch(repoPath)
 			if err != nil {
 				return err
 			}
 
 			worktreePath := filepath.Join(repoPath, branch)
-			return g.WorktreeAdd(repoPath, worktreePath, "-b", branch, "origin/"+branch)
+			return g.WorktreeAdd(repoPath, worktreePath, branch)
 		},
 	}
 }

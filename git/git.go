@@ -3,8 +3,6 @@ package git
 import (
 	"fmt"
 	"log/slog"
-	"path"
-	"strings"
 
 	"github.com/JacobGDG/bark/shell"
 )
@@ -27,8 +25,9 @@ func New() (*Client, error) {
 func (c *Client) Clone(url, dest string, args ...string) error {
 	_, err := c.git.Run(append([]string{"clone", url, dest}, args...)...)
 
-	slog.Debug("Repository cloned", "url", url)
-	slog.Debug("Repository cloned", "destination", dest)
+	if err == nil {
+		slog.Debug("repository cloned", "url", url, "dest", dest)
+	}
 
 	return err
 }
@@ -37,29 +36,21 @@ func (c *Client) Clone(url, dest string, args ...string) error {
 func (c *Client) WorktreeAdd(repoPath, dest string, args ...string) error {
 	_, err := c.git.Run(append([]string{"-C", repoPath, "worktree", "add", dest}, args...)...)
 
-	slog.Debug("Worktree added", "repoPath", repoPath)
-	slog.Debug("Worktree added", "destination", dest)
-
-	return err
-}
-
-// SetRemoteHead resolves and sets refs/remotes/origin/HEAD for the repo at repoPath.
-func (c *Client) SetRemoteHead(repoPath string) error {
-	_, err := c.git.Run("-C", repoPath, "remote", "set-head", "origin", "--auto")
-
-	slog.Debug("Remote head set", "repoPath", repoPath)
+	if err == nil {
+		slog.Debug("worktree added", "repo", repoPath, "dest", dest)
+	}
 
 	return err
 }
 
 // DefaultBranch returns the default branch name for the repo at repoPath.
 func (c *Client) DefaultBranch(repoPath string) (string, error) {
-	ref, err := c.git.Run("-C", repoPath, "symbolic-ref", "refs/remotes/origin/HEAD")
+	branch, err := c.git.Run("-C", repoPath, "branch", "--show-current")
 	if err != nil {
 		return "", fmt.Errorf("could not determine default branch: %w", err)
 	}
 
-	slog.Debug("Default branch set", "repoPath", repoPath)
+	slog.Debug("resolved default branch", "branch", branch)
 
-	return path.Base(strings.TrimSpace(ref)), nil
+	return branch, nil
 }
