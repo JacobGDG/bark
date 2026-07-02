@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/JacobGDG/bark/config"
+	"github.com/JacobGDG/bark/git"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +24,7 @@ func NewCloneCommand(cfg *config.Config) *cobra.Command {
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			deps, err := buildDeps()
+			err := checkDeps()
 			if err != nil {
 				return err
 			}
@@ -41,17 +42,22 @@ func NewCloneCommand(cfg *config.Config) *cobra.Command {
 				return fmt.Errorf("could not create repo directory: %w", err)
 			}
 
-			if err := deps.git.Clone(url, filepath.Join(repoPath, ".git"), "--bare"); err != nil {
+			g, err := git.New()
+			if err != nil {
 				return err
 			}
 
-			branch, err := deps.git.DefaultBranch(repoPath)
+			if err := g.Clone(url, filepath.Join(repoPath, ".git"), "--bare"); err != nil {
+				return err
+			}
+
+			branch, err := g.DefaultBranch(repoPath)
 			if err != nil {
 				return err
 			}
 
 			worktreePath := filepath.Join(repoPath, branch)
-			return deps.git.WorktreeAdd(repoPath, worktreePath, branch)
+			return g.WorktreeAdd(repoPath, worktreePath, branch)
 		},
 	}
 }

@@ -12,6 +12,14 @@ type Client struct {
 	git *shell.Client
 }
 
+func Check() error {
+	err := shell.Check("git")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // New resolves the git binary and returns a Client.
 func New() (*Client, error) {
 	g, err := shell.New("git")

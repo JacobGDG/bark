@@ -11,6 +11,15 @@ type Client struct {
 	binPath string
 }
 
+// simply check the bin exists in path, do nothing
+func Check(binName string) error {
+	_, err := exec.LookPath(binName)
+	if err != nil {
+		return fmt.Errorf("%s not found in PATH: %w", binName, err)
+	}
+	return nil
+}
+
 // New resolves binaryName via PATH and returns a Client, or an error if not found.
 func New(binName string) (*Client, error) {
 	binaryPath, err := exec.LookPath(binName)
