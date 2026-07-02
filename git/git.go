@@ -24,7 +24,7 @@ func Check() error {
 func New() (*Client, error) {
 	g, err := shell.New("git")
 	if err != nil {
-		return nil, fmt.Errorf("git client: %w", err)
+		return nil, err
 	}
 	return &Client{git: g}, nil
 }

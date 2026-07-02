@@ -25,3 +25,12 @@ func Load() (*Config, error) {
 func (c *Config) log() {
 	slog.Debug("config loaded", "worktree_root_dir", c.WorktreeRootDir)
 }
+
+func (c *Config) DepRequired(dep string) bool {
+	switch dep {
+	case "git":
+		return false
+	default:
+		return false
+	}
+}

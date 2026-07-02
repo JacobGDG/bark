@@ -24,7 +24,7 @@ func NewCloneCommand(cfg *config.Config) *cobra.Command {
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := checkDeps()
+			err := checkDeps(cfg)
 			if err != nil {
 				return err
 			}

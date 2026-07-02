@@ -1,7 +1,6 @@
 package shell
 
 import (
-	"fmt"
 	"os/exec"
 	"strings"
 )
@@ -15,7 +14,7 @@ type Client struct {
 func Check(binName string) error {
 	_, err := exec.LookPath(binName)
 	if err != nil {
-		return fmt.Errorf("%s not found in PATH: %w", binName, err)
+		return err
 	}
 	return nil
 }
@@ -24,7 +23,7 @@ func Check(binName string) error {
 func New(binName string) (*Client, error) {
 	binaryPath, err := exec.LookPath(binName)
 	if err != nil {
-		return nil, fmt.Errorf("%s not found in PATH: %w", binName, err)
+		return nil, err
 	}
 	return &Client{binPath: binaryPath}, nil
 }

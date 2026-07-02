@@ -1,12 +1,13 @@
 package cli
 
 import (
+	"github.com/JacobGDG/bark/config"
 	"github.com/JacobGDG/bark/git"
 )
 
-func checkDeps() error {
+func checkDeps(cfg *config.Config) error {
 	err := git.Check()
-	if err != nil {
+	if err != nil && cfg.DepRequired("git") {
 		return err
 	}
 
