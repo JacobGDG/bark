@@ -3,10 +3,11 @@ package cli
 import (
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/JacobGDG/bark/config"
-	"github.com/JacobGDG/bark/git"
 	"github.com/spf13/cobra"
 )
 
@@ -22,9 +23,14 @@ func NewCloneCommand(cfg *config.Config) *cobra.Command {
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			deps, err := buildDeps()
+			if err != nil {
+				return err
+			}
+
 			url := args[0]
 
-			repoName, err := git.RepoNameFromURL(url)
+			repoName, err := repoNameFromURL(url)
 			if err != nil {
 				return err
 			}
@@ -35,22 +41,25 @@ func NewCloneCommand(cfg *config.Config) *cobra.Command {
 				return fmt.Errorf("could not create repo directory: %w", err)
 			}
 
-			g, err := git.New()
-			if err != nil {
+			if err := deps.git.Clone(url, filepath.Join(repoPath, ".git"), "--bare"); err != nil {
 				return err
 			}
 
-			if err := g.Clone(url, filepath.Join(repoPath, ".git"), "--bare"); err != nil {
-				return err
-			}
-
-			branch, err := g.DefaultBranch(repoPath)
+			branch, err := deps.git.DefaultBranch(repoPath)
 			if err != nil {
 				return err
 			}
 
 			worktreePath := filepath.Join(repoPath, branch)
-			return g.WorktreeAdd(repoPath, worktreePath, branch)
+			return deps.git.WorktreeAdd(repoPath, worktreePath, branch)
 		},
 	}
+}
+
+func repoNameFromURL(rawURL string) (string, error) {
+	name := strings.TrimSuffix(path.Base(rawURL), ".git")
+	if name == "" || name == "." {
+		return "", fmt.Errorf("could not derive repo name from URL: %s", rawURL)
+	}
+	return name, nil
 }
