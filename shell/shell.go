@@ -5,8 +5,12 @@ import (
 	"strings"
 )
 
+type Shell interface {
+	Run(args ...string) (string, error)
+}
+
 // Client runs a single resolved binary.
-type Client struct {
+type RealShell struct {
 	binPath string
 }
 
@@ -20,16 +24,16 @@ func Check(binName string) error {
 }
 
 // New resolves binaryName via PATH and returns a Client, or an error if not found.
-func New(binName string) (*Client, error) {
-	binaryPath, err := exec.LookPath(binName)
+func NewShell(binName string) (Shell, error) {
+	binPath, err := exec.LookPath(binName)
 	if err != nil {
 		return nil, err
 	}
-	return &Client{binPath: binaryPath}, nil
+	return &RealShell{binPath}, nil
 }
 
 // Capture executes the binary with args and returns stdout on success.
-func (c *Client) Run(args ...string) (string, error) {
+func (c *RealShell) Run(args ...string) (string, error) {
 	cmd := exec.Command(c.binPath, args...)
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout
