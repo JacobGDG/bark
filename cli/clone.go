@@ -7,12 +7,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/JacobGDG/bark/config"
-	"github.com/JacobGDG/bark/git"
 	"github.com/spf13/cobra"
 )
 
-func NewCloneCommand(cfg *config.Config) *cobra.Command {
+func NewCloneCommand(deps *Deps) *cobra.Command {
 	return &cobra.Command{
 		Use:   "clone <url>",
 		Short: "Clone repo into worktrees root",
@@ -24,11 +22,6 @@ func NewCloneCommand(cfg *config.Config) *cobra.Command {
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := checkDeps(cfg)
-			if err != nil {
-				return err
-			}
-
 			url := args[0]
 
 			repoName, err := repoNameFromURL(url)
@@ -36,28 +29,23 @@ func NewCloneCommand(cfg *config.Config) *cobra.Command {
 				return err
 			}
 
-			repoPath := filepath.Join(cfg.WorktreeRootDir, repoName)
+			repoPath := filepath.Join(deps.cfg.WorktreeRootDir, repoName)
 			// TODO: ensure direcotry does not exist
 			if err := os.MkdirAll(repoPath, 0755); err != nil {
 				return fmt.Errorf("could not create repo directory: %w", err)
 			}
 
-			g, err := git.New()
-			if err != nil {
+			if err := deps.git.Clone(url, filepath.Join(repoPath, ".git"), "--bare"); err != nil {
 				return err
 			}
 
-			if err := g.Clone(url, filepath.Join(repoPath, ".git"), "--bare"); err != nil {
-				return err
-			}
-
-			branch, err := g.DefaultBranch(repoPath)
+			branch, err := deps.git.DefaultBranch(repoPath)
 			if err != nil {
 				return err
 			}
 
 			worktreePath := filepath.Join(repoPath, branch)
-			return g.WorktreeAdd(repoPath, worktreePath, branch)
+			return deps.git.WorktreeAdd(repoPath, worktreePath, branch)
 		},
 	}
 }

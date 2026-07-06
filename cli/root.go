@@ -10,6 +10,10 @@ func NewRootCommand(version string) (*cobra.Command, error) {
 	if err != nil {
 		return nil, err
 	}
+	deps, err := createDeps(cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	rootCommand := &cobra.Command{
 		Use:     "bark",
@@ -18,7 +22,7 @@ func NewRootCommand(version string) (*cobra.Command, error) {
 	}
 
 	rootCommand.AddCommand(
-		NewCloneCommand(cfg),
+		NewCloneCommand(deps),
 		// add - to create a new worktree from within a repo and create a tmux session
 		//     - --stay skip the session creation
 		// switch - start or switch to a session focussed on a given worktree

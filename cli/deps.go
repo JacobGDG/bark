@@ -5,11 +5,19 @@ import (
 	"github.com/JacobGDG/bark/git"
 )
 
-func checkDeps(cfg *config.Config) error {
-	err := git.Check()
-	if err != nil && cfg.DepRequired("git") {
-		return err
+type Deps struct {
+	cfg *config.Config
+	git git.Git
+}
+
+func createDeps(cfg *config.Config) (*Deps, error) {
+	g, err := git.New()
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return &Deps{
+		cfg: cfg,
+		git: g,
+	}, nil
 }
