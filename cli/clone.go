@@ -38,6 +38,8 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
 				return err
 			}
 
+			// TODO: `fetch = +refs/heads/*:refs/remotes/origin/*` on origin to allow full fetches
+
 			branch, err := deps.git.DefaultBranch(repoPath)
 			if err != nil {
 				return err
