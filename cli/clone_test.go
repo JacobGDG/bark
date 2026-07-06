@@ -2,6 +2,9 @@ package cli
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRepoNameFromURL(t *testing.T) {
@@ -49,23 +52,18 @@ func TestRepoNameFromURL(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := repoNameFromURL(tt.input)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := repoNameFromURL(test.input)
 
-			if err != nil && !tt.wantErr {
-				t.Errorf("expected '%s' to return '%s' but got error '%s'", tt.input, tt.want, err)
-				return
-			}
+			if !test.wantErr {
+				require.NoError(t, err)
 
-			if err == nil && tt.wantErr {
-				t.Errorf("expected '%s' to return an Err but got '%s'", tt.input, got)
-				return
-			}
-
-			if got != tt.want {
-				t.Errorf("expected '%s' to return '%s' but got '%s'", tt.input, tt.want, got)
-				return
+				if assert.NotNil(t, got) {
+					assert.Equal(t, test.want, got)
+				}
+			} else {
+				assert.Error(t, err)
 			}
 		})
 	}
