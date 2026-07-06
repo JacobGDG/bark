@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -51,7 +50,15 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
 }
 
 func repoNameFromURL(rawURL string) (string, error) {
-	name := strings.TrimSuffix(path.Base(rawURL), ".git")
+	parts := strings.Split(rawURL, "/")
+	length := len(parts)
+	lastItem := parts[length-1]
+
+	if length < 2 || lastItem == "" {
+		return "", fmt.Errorf("could not derive repo name from URL: %s", rawURL)
+	}
+
+	name := strings.TrimSuffix(lastItem, ".git")
 	if name == "" || name == "." {
 		return "", fmt.Errorf("could not derive repo name from URL: %s", rawURL)
 	}
