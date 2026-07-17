@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -46,7 +47,20 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
 			}
 
 			worktreePath := filepath.Join(repoPath, branch)
-			return deps.git.WorktreeAdd(repoPath, worktreePath, branch)
+			err = deps.git.WorktreeAdd(repoPath, worktreePath, branch)
+			if err != nil {
+				return err
+			}
+
+			if deps.zoxide != nil {
+				err := deps.zoxide.Add(worktreePath)
+				slog.Warn("Attempted to add dir to zoxide and failed", "dir", worktreePath, "message", err)
+
+				err = deps.zoxide.Add(repoPath)
+				slog.Warn("Attempted to add dir to zoxide and failed", "dir", repoPath, "message", err)
+			}
+
+			return nil
 		},
 	}
 }
