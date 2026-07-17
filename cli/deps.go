@@ -3,6 +3,7 @@ package cli
 import (
 	"github.com/JacobGDG/bark/config"
 	"github.com/JacobGDG/bark/git"
+	"github.com/JacobGDG/bark/shell"
 )
 
 type Deps struct {
@@ -11,7 +12,12 @@ type Deps struct {
 }
 
 func createDeps(cfg *config.Config) (*Deps, error) {
-	g, err := git.New()
+	sh, err := shell.New()
+	if err != nil {
+		return nil, err
+	}
+
+	g, err := git.New(sh)
 	if err != nil {
 		return nil, err
 	}
