@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -29,30 +28,27 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
 				return err
 			}
 
+			// --config writes the refspec before the initial transfer, so
+			// the remote-tracking refs exist without a separate fetch.
 			repoPath := filepath.Join(deps.cfg.WorktreeRootDir, repoName)
-			// TODO: ensure direcotry does not exist
-			if err := os.MkdirAll(repoPath, 0755); err != nil {
-				return fmt.Errorf("could not create repo directory: %w", err)
-			}
-
-			if err := deps.git.Clone(url, filepath.Join(repoPath, ".git"), "--bare"); err != nil {
+			err = deps.git.Clone(url, filepath.Join(repoPath, ".git"),
+				"--bare",
+				"--config", "remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*")
+			if err != nil {
 				return err
 			}
-
-			// TODO: `fetch = +refs/heads/*:refs/remotes/origin/*` on origin to allow full fetches
 
 			branch, err := deps.git.DefaultBranch(repoPath)
 			if err != nil {
 				return err
 			}
 
-			worktreePath := filepath.Join(repoPath, branch)
-			err = deps.git.WorktreeAdd(repoPath, worktreePath, branch)
-			if err != nil {
+			if err := deps.git.SetBranchUpstream(repoPath, branch); err != nil {
 				return err
 			}
 
-			err = deps.git.SetOriginFetch(repoPath)
+			worktreePath := filepath.Join(repoPath, branch)
+			err = deps.git.WorktreeAdd(repoPath, worktreePath, branch)
 			if err != nil {
 				return err
 			}

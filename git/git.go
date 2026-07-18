@@ -11,7 +11,7 @@ type Git interface {
 	Clone(url, dest string, args ...string) error
 	WorktreeAdd(repoPath, dest string, args ...string) error
 	DefaultBranch(repoPath string) (string, error)
-	SetOriginFetch(repoPath string) error
+	SetBranchUpstream(repoPath, branch string) error
 }
 
 type RealGit struct {
@@ -67,14 +67,14 @@ func (g *RealGit) DefaultBranch(repoPath string) (string, error) {
 	return branch, nil
 }
 
-// DefaultBranch returns the default branch name for the repo at repoPath.
-func (g *RealGit) SetOriginFetch(repoPath string) error {
-	_, err := g.shell.Run("git", "-C", repoPath, "config", "--local", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
+func (g *RealGit) SetBranchUpstream(repoPath, branch string) error {
+	upstream := fmt.Sprintf("origin/%s", branch)
+	_, err := g.shell.Run("git", "-C", repoPath, "branch", "--set-upstream-to", upstream, branch)
 	if err != nil {
-		return fmt.Errorf("Could not set remot.origins: %w", err)
+		return fmt.Errorf("could not set upstream for %s: %w", branch, err)
 	}
 
-	slog.Debug("remote origins set to wildcard")
+	slog.Debug("branch upstream set", "branch", branch, "upstream", upstream)
 
 	return nil
 }
