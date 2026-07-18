@@ -6,7 +6,7 @@ import (
 )
 
 type Shell interface {
-	Run(name string, args ...string) (string, error)
+	Run(name string, args ...string) (string, *CmdError)
 }
 
 type RealShell struct{}
@@ -23,7 +23,7 @@ func New() (Shell, error) {
 	return &RealShell{}, nil
 }
 
-func (c *RealShell) Run(name string, args ...string) (string, error) {
+func (c *RealShell) Run(name string, args ...string) (string, *CmdError) {
 	cmd := exec.Command(name, args...)
 	var stdout, stderr strings.Builder
 	cmd.Stdout = &stdout

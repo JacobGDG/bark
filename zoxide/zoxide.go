@@ -1,6 +1,7 @@
 package zoxide
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/JacobGDG/bark/shell"
@@ -29,13 +30,11 @@ func New(sh shell.Shell) (Zoxide, error) {
 	return &RealZoxide{shell: sh}, nil
 }
 
-// Clone clones url to dest, passing any extra args after the positional arguments.
 func (g *RealZoxide) Add(dir string) error {
 	_, err := g.shell.Run("zoxide", "add", dir)
-
-	if err == nil {
-		slog.Debug("directory added to zoxide", "dir", dir)
+	if err != nil {
+		return fmt.Errorf("failed to add %s to zoxide: %w", dir, err)
 	}
-
-	return err
+	slog.Debug("directory added to zoxide", "dir", dir)
+	return nil
 }

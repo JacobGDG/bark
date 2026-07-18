@@ -1,20 +1,21 @@
 package zoxide
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/JacobGDG/bark/shell"
 )
 
 type mockShell struct {
 	gotName string
 	gotArgs []string
-	err     error
+	err     *shell.CmdError
 }
 
-func (m *mockShell) Run(name string, args ...string) (string, error) {
+func (m *mockShell) Run(name string, args ...string) (string, *shell.CmdError) {
 	m.gotName = name
 	m.gotArgs = args
 	return "", m.err
@@ -24,7 +25,7 @@ func TestAdd(t *testing.T) {
 	tests := []struct {
 		name     string
 		dir      string
-		shellErr error
+		shellErr *shell.CmdError
 		wantName string
 		wantArgs []string
 		wantErr  bool
@@ -40,7 +41,7 @@ func TestAdd(t *testing.T) {
 		{
 			name:     "shell error is returned",
 			dir:      "/some/dir",
-			shellErr: errors.New("zoxide failed"),
+			shellErr: &shell.CmdError{Stderr: "zoxide failed", ExitCode: 1},
 			wantName: "zoxide",
 			wantArgs: []string{"add", "/some/dir"},
 			wantErr:  true,

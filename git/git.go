@@ -36,23 +36,21 @@ func New(sh shell.Shell) (Git, error) {
 // Clone clones url to dest, passing any extra args after the positional arguments.
 func (g *RealGit) Clone(url, dest string, args ...string) error {
 	_, err := g.shell.Run("git", append([]string{"clone", url, dest}, args...)...)
-
-	if err == nil {
-		slog.Debug("repository cloned", "url", url, "dest", dest)
+	if err != nil {
+		return fmt.Errorf("failed to clone %s: %w", url, err)
 	}
-
-	return err
+	slog.Debug("repository cloned", "url", url, "dest", dest)
+	return nil
 }
 
 // WorktreeAdd adds a worktree at dest from repoPath, passing any extra args after the positional arguments.
 func (g *RealGit) WorktreeAdd(repoPath, dest string, args ...string) error {
 	_, err := g.shell.Run("git", append([]string{"-C", repoPath, "worktree", "add", dest}, args...)...)
-
-	if err == nil {
-		slog.Debug("worktree added", "repo", repoPath, "dest", dest)
+	if err != nil {
+		return fmt.Errorf("failed to add worktree at %s: %w", dest, err)
 	}
-
-	return err
+	slog.Debug("worktree added", "repo", repoPath, "dest", dest)
+	return nil
 }
 
 // DefaultBranch returns the default branch name for the repo at repoPath.

@@ -1,5 +1,9 @@
 package shell
 
+import (
+	"fmt"
+)
+
 type CmdError struct {
 	Stderr   string
 	ExitCode int
@@ -7,5 +11,6 @@ type CmdError struct {
 }
 
 func (e *CmdError) Error() string {
-	return e.Stderr
+	return fmt.Sprintf("command failed (%d): %s", e.ExitCode, e.Stderr)
+
 }
