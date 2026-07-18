@@ -7,6 +7,13 @@
     flake-utils.lib.eachDefaultSystem (system:
       let pkgs = nixpkgs.legacyPackages.${system}; in
       {
+        packages.default = pkgs.buildGoModule {
+          pname = "bark";
+          version = "0-unstable";
+          src = ./.;
+          vendorHash = "sha256-QIFGTWaBRCRItJOXkbXAziBDrVffuX/LEdNUvUQX4QY=";
+        };
+
         devShells.default = pkgs.mkShell {
           name = "bark-devShell";
           packages = with pkgs; [
