@@ -58,14 +58,10 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
 			}
 
 			if deps.zoxide != nil {
-				err := deps.zoxide.Add(worktreePath)
-				if err != nil {
-					slog.Warn("Attempted to add dir to zoxide and failed", "dir", worktreePath, "message", err)
-				}
-
-				err = deps.zoxide.Add(repoPath)
-				if err != nil {
-					slog.Warn("Attempted to add dir to zoxide and failed", "dir", repoPath, "message", err)
+				for _, dir := range []string{worktreePath, repoPath} {
+					if err := deps.zoxide.Add(dir); err != nil {
+						slog.Warn("Attempted to add dir to zoxide and failed", "dir", dir, "message", err)
+					}
 				}
 			}
 
