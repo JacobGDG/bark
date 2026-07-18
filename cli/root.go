@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewRootCommand constructs the top-level "bark" command and all its subcommands.
 func NewRootCommand(version string) (*cobra.Command, error) {
 	cfg, err := config.Load()
 	if err != nil {

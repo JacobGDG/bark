@@ -7,6 +7,8 @@ import (
 	"github.com/JacobGDG/bark/zoxide"
 )
 
+// Deps is a container for all external dependencies needed for Bark to run.
+// Constructing this early means we can fail fast if any required commands are not available.
 type Deps struct {
 	cfg    *config.Config
 	git    git.Git

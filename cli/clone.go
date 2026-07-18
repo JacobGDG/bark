@@ -18,6 +18,8 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
 - <worktree-root>/<repo>/
   - .git/   a --bare clone
   - main/   the default branch
+
+If zoxide is available, it will also add the <repo> and main directories to its database.
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -28,9 +30,10 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
 				return err
 			}
 
+			repoPath := filepath.Join(deps.cfg.WorktreeRootDir, repoName)
+
 			// --config writes the refspec before the initial transfer, so
 			// the remote-tracking refs exist without a separate fetch.
-			repoPath := filepath.Join(deps.cfg.WorktreeRootDir, repoName)
 			err = deps.git.Clone(url, filepath.Join(repoPath, ".git"),
 				"--bare",
 				"--config", "remote.origin.fetch=+refs/heads/*:refs/remotes/origin/*")

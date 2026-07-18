@@ -5,7 +5,9 @@ import (
 	"strings"
 )
 
+// Shell centralises all exec.Command calls into a single place.
 type Shell interface {
+	// Run executes name with args and returns trimmed stdout on success.
 	Run(name string, args ...string) (string, *CmdError)
 }
 

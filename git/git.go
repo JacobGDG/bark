@@ -11,6 +11,8 @@ type Git interface {
 	Clone(url, dest string, args ...string) error
 	WorktreeAdd(repoPath, dest string, args ...string) error
 	DefaultBranch(repoPath string) (string, error)
+	// SetBranchUpstream ensures a given local branch is correctly linked to a branch in origin,
+	// without this any interactions with origin would not know where to point.
 	SetBranchUpstream(repoPath, branch string) error
 }
 
@@ -33,7 +35,6 @@ func New(sh shell.Shell) (Git, error) {
 	return &RealGit{shell: sh}, nil
 }
 
-// Clone clones url to dest, passing any extra args after the positional arguments.
 func (g *RealGit) Clone(url, dest string, args ...string) error {
 	_, err := g.shell.Run("git", append([]string{"clone", url, dest}, args...)...)
 	if err != nil {
@@ -43,7 +44,6 @@ func (g *RealGit) Clone(url, dest string, args ...string) error {
 	return nil
 }
 
-// WorktreeAdd adds a worktree at dest from repoPath, passing any extra args after the positional arguments.
 func (g *RealGit) WorktreeAdd(repoPath, dest string, args ...string) error {
 	_, err := g.shell.Run("git", append([]string{"-C", repoPath, "worktree", "add", dest}, args...)...)
 	if err != nil {
@@ -53,7 +53,6 @@ func (g *RealGit) WorktreeAdd(repoPath, dest string, args ...string) error {
 	return nil
 }
 
-// DefaultBranch returns the default branch name for the repo at repoPath.
 func (g *RealGit) DefaultBranch(repoPath string) (string, error) {
 	branch, err := g.shell.Run("git", "-C", repoPath, "branch", "--show-current")
 	if err != nil {
