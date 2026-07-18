@@ -11,6 +11,7 @@ type Git interface {
 	Clone(url, dest string, args ...string) error
 	WorktreeAdd(repoPath, dest string, args ...string) error
 	DefaultBranch(repoPath string) (string, error)
+	SetOriginFetch(repoPath string) error
 }
 
 type RealGit struct {
@@ -64,4 +65,16 @@ func (g *RealGit) DefaultBranch(repoPath string) (string, error) {
 	slog.Debug("resolved default branch", "branch", branch)
 
 	return branch, nil
+}
+
+// DefaultBranch returns the default branch name for the repo at repoPath.
+func (g *RealGit) SetOriginFetch(repoPath string) error {
+	_, err := g.shell.Run("git", "-C", repoPath, "config", "--local", "remote.origin.fetch", "+refs/heads/*:refs/remotes/origin/*")
+	if err != nil {
+		return fmt.Errorf("Could not set remot.origins: %w", err)
+	}
+
+	slog.Debug("remote origins set to wildcard")
+
+	return nil
 }

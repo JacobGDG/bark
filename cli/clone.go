@@ -52,6 +52,11 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
 				return err
 			}
 
+			err = deps.git.SetOriginFetch(repoPath)
+			if err != nil {
+				return err
+			}
+
 			if deps.zoxide != nil {
 				err := deps.zoxide.Add(worktreePath)
 				if err != nil {
