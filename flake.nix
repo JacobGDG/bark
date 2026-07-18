@@ -22,7 +22,7 @@
           ];
           env.LOG_LEVEL = "error";
           shellHook = ''
-            export PATH="$PATH:$(go env GOPATH)/bin"
+            export PATH="$(go env GOPATH)/bin:$PATH"
           '';
         };
       }
