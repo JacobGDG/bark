@@ -46,13 +46,13 @@ If zoxide is available, it will also add the <repo> and main directories to its 
 				return err
 			}
 
-			if err := deps.git.SetBranchUpstream(repoPath, branch); err != nil {
-				return err
-			}
-
 			worktreePath := filepath.Join(repoPath, branch)
 			err = deps.git.WorktreeAdd(repoPath, worktreePath, branch)
 			if err != nil {
+				return err
+			}
+
+			if err := deps.git.SetBranchUpstream(repoPath, branch); err != nil {
 				return err
 			}
 
