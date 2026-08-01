@@ -9,6 +9,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+//TODO:
+// 2 types of clone, reference and dev. Clone to different places
+// clone and checkout a specific version or tag. Useful for reference
+// after clone switch open new worktree as a tmux session
+
 func NewCloneCommand(deps *Deps) *cobra.Command {
 	return &cobra.Command{
 		Use:   "clone <url>",
