@@ -99,7 +99,7 @@ func configSearchPaths() ([]string, error) {
 
 func xdgConfigPath() (string, error) {
 	if v := os.Getenv("XDG_CONFIG_HOME"); v != "" {
-		return filepath.Join(v, "bark", "config.toml"), nil
+		return filepath.Join(v, "bark", "bark.toml"), nil
 	}
 
 	home, err := os.UserHomeDir()
@@ -107,5 +107,5 @@ func xdgConfigPath() (string, error) {
 		return "", err
 	}
 
-	return filepath.Join(home, ".config", "bark", "config.toml"), nil
+	return filepath.Join(home, ".config", "bark", "bark.toml"), nil
 }

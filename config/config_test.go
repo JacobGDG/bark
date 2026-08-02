@@ -68,7 +68,7 @@ func TestLoad(t *testing.T) {
 				barkDir := filepath.Join(configDir, "bark")
 				require.NoError(t, os.MkdirAll(barkDir, 0755))
 				require.NoError(t, os.WriteFile(
-					filepath.Join(barkDir, "config.toml"),
+					filepath.Join(barkDir, "bark.toml"),
 					[]byte(*tt.fileContent),
 					0644,
 				))
@@ -95,7 +95,7 @@ func TestLoad_EmptyFileLogsWarning(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", configDir)
 	barkDir := filepath.Join(configDir, "bark")
 	require.NoError(t, os.MkdirAll(barkDir, 0755))
-	require.NoError(t, os.WriteFile(filepath.Join(barkDir, "config.toml"), []byte(""), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(barkDir, "bark.toml"), []byte(""), 0644))
 
 	_, err := Load()
 	require.NoError(t, err)
