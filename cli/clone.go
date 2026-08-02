@@ -15,7 +15,9 @@ import (
 // after clone switch open new worktree as a tmux session
 
 func NewCloneCommand(deps *Deps) *cobra.Command {
-	return &cobra.Command{
+	var stay bool
+
+	cmd := &cobra.Command{
 		Use:   "clone <url>",
 		Short: "Clone repo into worktrees root",
 		Long: `Clone a repo into the worktrees root directory, in a --bare repo and default branch worktree like so:
@@ -25,6 +27,7 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
   - main/   the default branch
 
 If zoxide is available, it will also add the <repo> and main directories to its database.
+If inside a tmux session, it will create a new session and switch to it.
 		`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -69,9 +72,21 @@ If zoxide is available, it will also add the <repo> and main directories to its 
 				}
 			}
 
+			if !stay && deps.tmux != nil {
+				session := fmt.Sprintf("%s/%s", repoName, branch)
+				if err := deps.tmux.NewSession(session, worktreePath); err != nil {
+					slog.Error("failed to create tmux session", "session", session, "err", err)
+				} else if err := deps.tmux.SwitchClient(session); err != nil {
+					slog.Error("failed to switch to tmux session", "session", session, "err", err)
+				}
+			}
+
 			return nil
 		},
 	}
+
+	cmd.Flags().BoolVar(&stay, "stay", false, "Skip tmux session creation after clone")
+	return cmd
 }
 
 func repoNameFromURL(rawURL string) (string, error) {

@@ -4,6 +4,7 @@ import (
 	"github.com/JacobGDG/bark/config"
 	"github.com/JacobGDG/bark/git"
 	"github.com/JacobGDG/bark/shell"
+	"github.com/JacobGDG/bark/tmux"
 	"github.com/JacobGDG/bark/zoxide"
 )
 
@@ -13,6 +14,7 @@ type Deps struct {
 	cfg    *config.Config
 	git    git.Git
 	zoxide zoxide.Zoxide
+	tmux   tmux.Tmux
 }
 
 func createDeps(cfg *config.Config) (*Deps, error) {
@@ -27,10 +29,12 @@ func createDeps(cfg *config.Config) (*Deps, error) {
 	}
 
 	z, _ := zoxide.New(sh)
+	t, _ := tmux.New(sh)
 
 	return &Deps{
 		cfg:    cfg,
 		git:    g,
 		zoxide: z,
+		tmux:   t,
 	}, nil
 }
