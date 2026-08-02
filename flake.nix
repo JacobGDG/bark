@@ -4,14 +4,14 @@
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
   outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+    (flake-utils.lib.eachDefaultSystem (system:
       let pkgs = nixpkgs.legacyPackages.${system}; in
       {
         packages.default = pkgs.buildGoModule {
           pname = "bark";
           version = "0-unstable";
           src = ./.;
-          vendorHash = "sha256-QIFGTWaBRCRItJOXkbXAziBDrVffuX/LEdNUvUQX4QY=";
+          vendorHash = "sha256-Y28d3ojfhhok/IrOf4GVmH4vOWipNb7Clly3vdnMfg4=";
         };
 
         devShells.default = pkgs.mkShell {
@@ -26,5 +26,7 @@
           '';
         };
       }
-    );
+    )) // {
+      homeManagerModules.default = import ./flake/home-manager.nix self;
+    };
 }
