@@ -10,12 +10,18 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+type tmuxConfig struct {
+	StartupCommand string `toml:"startup_command"`
+}
+
 type configFile struct {
-	RootDir string `toml:"root_dir"`
+	RootDir string     `toml:"root_dir"`
+	Tmux    tmuxConfig `toml:"tmux"`
 }
 
 type Config struct {
-	WorktreeRootDir string
+	WorktreeRootDir    string
+	TmuxStartupCommand string
 }
 
 func Load() (*Config, error) {
@@ -58,6 +64,9 @@ func Load() (*Config, error) {
 			if fileCfg.RootDir != "" {
 				cfg.WorktreeRootDir = fileCfg.RootDir
 			}
+			if fileCfg.Tmux.StartupCommand != "" {
+				cfg.TmuxStartupCommand = fileCfg.Tmux.StartupCommand
+			}
 		} else {
 			slog.Warn("Config file found, but is empty, continuing with defaults", "configPath", cfgPath)
 		}
@@ -70,6 +79,7 @@ func Load() (*Config, error) {
 func (c *Config) log() {
 	slog.Debug("config loaded",
 		"worktree_root_dir", c.WorktreeRootDir,
+		"tmux_startup_command", c.TmuxStartupCommand,
 	)
 }
 

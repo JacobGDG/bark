@@ -17,10 +17,11 @@ func TestLoad(t *testing.T) {
 	defaultRootDir := filepath.Join(home, "worktrees")
 
 	tests := []struct {
-		name        string
-		fileContent *string // nil = file does not exist
-		wantRootDir string
-		wantErr     bool
+		name                   string
+		fileContent            *string // nil = file does not exist
+		wantRootDir            string
+		wantTmuxStartupCommand string
+		wantErr                bool
 	}{
 		{
 			name:        "no file found uses defaults",
@@ -57,6 +58,23 @@ func TestLoad(t *testing.T) {
 			fileContent: new(`unknown_key = "value"`),
 			wantErr:     true,
 		},
+		{
+			name:                   "tmux startup_command is read",
+			fileContent:            new("[tmux]\nstartup_command = \"my-startup-command\""),
+			wantRootDir:            defaultRootDir,
+			wantTmuxStartupCommand: "my-startup-command",
+		},
+		{
+			name:                   "tmux section absent gives empty startup_command",
+			fileContent:            new(`root_dir = "/custom/path"`),
+			wantRootDir:            "/custom/path",
+			wantTmuxStartupCommand: "",
+		},
+		{
+			name:        "unknown field in tmux section returns error",
+			fileContent: new("[tmux]\nunknown_tmux_key = \"value\""),
+			wantErr:     true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -81,6 +99,7 @@ func TestLoad(t *testing.T) {
 			}
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantRootDir, cfg.WorktreeRootDir)
+			assert.Equal(t, tt.wantTmuxStartupCommand, cfg.TmuxStartupCommand)
 		})
 	}
 }

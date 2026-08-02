@@ -11,6 +11,7 @@ import (
 type Tmux interface {
 	NewSession(name, dir string) error
 	SwitchClient(name string) error
+	SendKeys(session, cmd string) error
 }
 
 type RealTmux struct {
@@ -41,6 +42,18 @@ func (t *RealTmux) NewSession(name, dir string) error {
 		return fmt.Errorf("failed to create tmux session %s: %w", name, err)
 	}
 	slog.Debug("tmux session created", "session", name, "dir", dir)
+	return nil
+}
+
+func (t *RealTmux) SendKeys(session, cmd string) error {
+	if !inTmuxSession() {
+		return fmt.Errorf("not in a tmux session")
+	}
+	_, err := t.shell.Run("tmux", "send-keys", "-t", session, cmd, "Enter")
+	if err != nil {
+		return fmt.Errorf("failed to send keys to session %s: %w", session, err)
+	}
+	slog.Debug("sent keys to session", "session", session, "cmd", cmd)
 	return nil
 }
 

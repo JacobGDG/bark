@@ -78,6 +78,10 @@ If inside a tmux session, it will create a new session and switch to it.
 					slog.Error("failed to create tmux session", "session", session, "err", err)
 				} else if err := deps.tmux.SwitchClient(session); err != nil {
 					slog.Error("failed to switch to tmux session", "session", session, "err", err)
+				} else if deps.cfg.TmuxStartupCommand != "" {
+					if err := deps.tmux.SendKeys(session, deps.cfg.TmuxStartupCommand); err != nil {
+						slog.Warn("startup command failed", "session", session, "err", err)
+					}
 				}
 			}
 

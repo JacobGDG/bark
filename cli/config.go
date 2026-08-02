@@ -19,8 +19,9 @@ func NewConfigCommand(cfg *config.Config) *cobra.Command {
 
 			switch arg {
 			case "root":
-				// By using the custom writer we can test the output
 				fmt.Fprintln(cmd.OutOrStdout(), cfg.WorktreeRootDir)
+			case "tmux.startup_command":
+				fmt.Fprintln(cmd.OutOrStdout(), cfg.TmuxStartupCommand)
 			default:
 				return fmt.Errorf("Config key not found: %s", arg)
 			}

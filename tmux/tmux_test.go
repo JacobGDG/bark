@@ -89,6 +89,74 @@ func TestNewSession(t *testing.T) {
 	}
 }
 
+func TestSendKeys(t *testing.T) {
+	tests := []struct {
+		name      string
+		session   string
+		cmd       string
+		inSession bool
+		shellErr  *shell.CmdError
+		wantName  string
+		wantArgs  []string
+		wantErr   bool
+	}{
+		{
+			name:      "success",
+			session:   "bark/main",
+			cmd:       "tmuxifier load-window vimsplit && tmux move-window -t 0 && tmux kill-window -t 1",
+			inSession: true,
+			shellErr:  nil,
+			wantName:  "tmux",
+			wantArgs:  []string{"send-keys", "-t", "bark/main", "tmuxifier load-window vimsplit && tmux move-window -t 0 && tmux kill-window -t 1", "Enter"},
+			wantErr:   false,
+		},
+		{
+			name:      "shell error is returned",
+			session:   "bark/main",
+			cmd:       "some-command",
+			inSession: true,
+			shellErr:  &shell.CmdError{Stderr: "no session", ExitCode: 1},
+			wantName:  "tmux",
+			wantArgs:  []string{"send-keys", "-t", "bark/main", "some-command", "Enter"},
+			wantErr:   true,
+		},
+		{
+			name:      "not in a tmux session",
+			session:   "bark/main",
+			cmd:       "some-command",
+			inSession: false,
+			shellErr:  nil,
+			wantName:  "",
+			wantArgs:  nil,
+			wantErr:   true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.inSession {
+				t.Setenv("TMUX", "/tmp/tmux-1000/default,1234,0")
+			} else {
+				t.Setenv("TMUX", "")
+			}
+
+			sh := &mockShell{err: test.shellErr}
+			tm := &RealTmux{shell: sh}
+
+			err := tm.SendKeys(test.session, test.cmd)
+
+			assert.Equal(t, test.wantName, sh.gotName)
+			assert.Equal(t, test.wantArgs, sh.gotArgs)
+
+			if test.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestSwitchClient(t *testing.T) {
 	tests := []struct {
 		name      string
