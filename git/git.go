@@ -17,6 +17,10 @@ type Git interface {
 	// RemoteExists checks that url points to a reachable repository, without
 	// transferring any objects.
 	RemoteExists(url string) error
+	// LocalBranchExists reports whether branch exists as a local branch in repoPath.
+	LocalBranchExists(repoPath, branch string) (bool, error)
+	// RemoteBranchExists reports whether branch exists on origin in repoPath.
+	RemoteBranchExists(repoPath, branch string) (bool, error)
 }
 
 type RealGit struct {
@@ -88,4 +92,30 @@ func (g *RealGit) RemoteExists(url string) error {
 	slog.Debug("remote repository verified", "url", url)
 
 	return nil
+}
+
+func (g *RealGit) LocalBranchExists(repoPath, branch string) (bool, error) {
+	_, err := g.shell.Run("git", "-C", repoPath, "show-ref", "--verify", "--quiet", "refs/heads/"+branch)
+	if err == nil {
+		slog.Debug("local branch found", "repo", repoPath, "branch", branch)
+		return true, nil
+	}
+	if err.ExitCode == 1 {
+		slog.Debug("local branch not found", "repo", repoPath, "branch", branch)
+		return false, nil
+	}
+	return false, fmt.Errorf("could not check local branch %s: %w", branch, err)
+}
+
+func (g *RealGit) RemoteBranchExists(repoPath, branch string) (bool, error) {
+	_, err := g.shell.Run("git", "-C", repoPath, "show-ref", "--verify", "--quiet", "refs/remotes/origin/"+branch)
+	if err == nil {
+		slog.Debug("remote branch found", "repo", repoPath, "branch", branch)
+		return true, nil
+	}
+	if err.ExitCode == 1 {
+		slog.Debug("remote branch not found", "repo", repoPath, "branch", branch)
+		return false, nil
+	}
+	return false, fmt.Errorf("could not check remote branch %s: %w", branch, err)
 }

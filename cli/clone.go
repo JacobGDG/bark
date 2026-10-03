@@ -2,7 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -44,10 +43,7 @@ If inside a tmux session, it will create a new session and switch to it.
 				return err
 			}
 
-			root := deps.cfg.WorktreeRootDir
-			if worktreeRootDir != "" {
-				root = worktreeRootDir
-			}
+			root := resolveWorktreeRoot(deps, worktreeRootDir)
 
 			repoPath := filepath.Join(root, repoName)
 
@@ -75,30 +71,14 @@ If inside a tmux session, it will create a new session and switch to it.
 				return err
 			}
 
-			if err := deps.git.SetBranchUpstream(repoPath, branch); err != nil {
-				slog.Warn("failed to set branch upstream", "repo", repoPath, "branch", branch, "err", err)
-			}
-
-			if deps.zoxide != nil {
-				for _, dir := range []string{worktreePath, repoPath} {
-					if err := deps.zoxide.Add(dir); err != nil {
-						slog.Warn("Attempted to add dir to zoxide and failed", "dir", dir, "message", err)
-					}
-				}
-			}
-
-			if !stay && deps.tmux != nil {
-				session := fmt.Sprintf("%s/%s", repoName, branch)
-				if err := deps.tmux.NewSession(session, worktreePath); err != nil {
-					slog.Error("failed to create tmux session", "session", session, "err", err)
-				} else if err := deps.tmux.SwitchClient(session); err != nil {
-					slog.Error("failed to switch to tmux session", "session", session, "err", err)
-				} else if deps.cfg.TmuxStartupCommand != "" {
-					if err := deps.tmux.SendKeys(session, deps.cfg.TmuxStartupCommand); err != nil {
-						slog.Warn("startup command failed", "session", session, "err", err)
-					}
-				}
-			}
+			finishWorktreeSetup(deps, worktreeSetup{
+				repoName:     repoName,
+				repoPath:     repoPath,
+				branch:       branch,
+				worktreePath: worktreePath,
+				setUpstream:  true,
+				stay:         stay,
+			})
 
 			return nil
 		},

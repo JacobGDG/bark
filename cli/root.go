@@ -24,12 +24,9 @@ func NewRootCommand(version string) (*cobra.Command, error) {
 
 	rootCommand.AddCommand(
 		NewCloneCommand(deps),
+		NewAddCommand(deps),
 
 		NewConfigCommand(cfg),
-		// add - to create a new worktree from within a repo and create a tmux session
-		//     - --stay skip the session creation
-		//     - one complexity here is .env files or node_modules which wont be in git
-		//       but will want to be in any given worktree
 		// switch - start or switch to a session focussed on a given worktree
 		// purge - Remove all worktrees whos branches have been merged
 		//			 - --all do this for all pulled repos
