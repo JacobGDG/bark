@@ -14,6 +14,9 @@ type Git interface {
 	// SetBranchUpstream ensures a given local branch is correctly linked to a branch in origin,
 	// without this any interactions with origin would not know where to point.
 	SetBranchUpstream(repoPath, branch string) error
+	// RemoteExists checks that url points to a reachable repository, without
+	// transferring any objects.
+	RemoteExists(url string) error
 }
 
 type RealGit struct {
@@ -72,6 +75,17 @@ func (g *RealGit) SetBranchUpstream(repoPath, branch string) error {
 	}
 
 	slog.Debug("branch upstream set", "branch", branch, "upstream", upstream)
+
+	return nil
+}
+
+func (g *RealGit) RemoteExists(url string) error {
+	_, err := g.shell.Run("git", "ls-remote", url, "HEAD")
+	if err != nil {
+		return fmt.Errorf("remote repository not found or inaccessible %s: %w", url, err)
+	}
+
+	slog.Debug("remote repository verified", "url", url)
 
 	return nil
 }

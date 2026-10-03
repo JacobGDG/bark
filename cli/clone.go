@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -33,12 +34,20 @@ If inside a tmux session, it will create a new session and switch to it.
 		RunE: func(cmd *cobra.Command, args []string) error {
 			url := args[0]
 
+			if err := deps.git.RemoteExists(url); err != nil {
+				return err
+			}
+
 			repoName, err := repoNameFromURL(url)
 			if err != nil {
 				return err
 			}
 
 			repoPath := filepath.Join(deps.cfg.WorktreeRootDir, repoName)
+
+			if _, err := os.Stat(repoPath); err == nil {
+				return fmt.Errorf("repo clone location already exists: %s", repoPath)
+			}
 
 			// --config writes the refspec before the initial transfer, so
 			// the remote-tracking refs exist without a separate fetch.
@@ -61,7 +70,7 @@ If inside a tmux session, it will create a new session and switch to it.
 			}
 
 			if err := deps.git.SetBranchUpstream(repoPath, branch); err != nil {
-				return err
+				slog.Warn("failed to set branch upstream", "repo", repoPath, "branch", branch, "err", err)
 			}
 
 			if deps.zoxide != nil {
