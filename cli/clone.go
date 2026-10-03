@@ -17,6 +17,7 @@ import (
 
 func NewCloneCommand(deps *Deps) *cobra.Command {
 	var stay bool
+	var worktreeRootDir string
 
 	cmd := &cobra.Command{
 		Use:   "clone <url>",
@@ -43,7 +44,12 @@ If inside a tmux session, it will create a new session and switch to it.
 				return err
 			}
 
-			repoPath := filepath.Join(deps.cfg.WorktreeRootDir, repoName)
+			root := deps.cfg.WorktreeRootDir
+			if worktreeRootDir != "" {
+				root = worktreeRootDir
+			}
+
+			repoPath := filepath.Join(root, repoName)
 
 			if _, err := os.Stat(repoPath); err == nil {
 				return fmt.Errorf("repo clone location already exists: %s", repoPath)
@@ -99,6 +105,7 @@ If inside a tmux session, it will create a new session and switch to it.
 	}
 
 	cmd.Flags().BoolVar(&stay, "stay", false, "Skip tmux session creation after clone")
+	cmd.Flags().StringVar(&worktreeRootDir, "worktree-root-dir", "", "Override the worktree root directory for this clone")
 	return cmd
 }
 
