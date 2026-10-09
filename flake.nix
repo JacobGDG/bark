@@ -12,6 +12,7 @@
           version = "0-unstable";
           src = ./.;
           vendorHash = "sha256-Y28d3ojfhhok/IrOf4GVmH4vOWipNb7Clly3vdnMfg4=";
+          nativeCheckInputs = [ pkgs.git ];
         };
 
         devShells.default = pkgs.mkShell {
