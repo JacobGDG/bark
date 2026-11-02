@@ -28,8 +28,16 @@ func NewAddCommand(deps *Deps) *cobra.Command {
 - If <branch> exists on origin but not locally, a local branch is created tracking it.
 - Otherwise, a brand-new branch is created off the repo's current HEAD.
 
-If inside a tmux session, it will create a new session and switch to it.
+The worktree is created at <worktree-root>/<repo>/<branch>.
+
+Side effects:
+- If zoxide is installed, the <repo> and <branch> directories are added to its database.
+- Unless --stay is passed, a tmux session named <repo>/<branch> is created and the
+  current tmux client is switched to it, then tmux.startup_command is sent to it.
+  Pass --stay when scripting or running non-interactively.
 		`,
+		Example: `  bark add bark my-feature --stay
+  bark add . my-feature --stay   # from anywhere inside <worktree-root>/bark/`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			repoArg := args[0]

@@ -25,11 +25,16 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
 
 - <worktree-root>/<repo>/
   - .git/   a --bare clone
-  - main/   the default branch
+  - main/   worktree for the remote's default branch (named after it)
 
-If zoxide is available, it will also add the <repo> and main directories to its database.
-If inside a tmux session, it will create a new session and switch to it.
+Side effects:
+- If zoxide is installed, the <repo> and default branch directories are added to its database.
+- Unless --stay is passed, a tmux session named <repo>/<branch> is created and the
+  current tmux client is switched to it, then tmux.startup_command is sent to it.
+  Pass --stay when scripting or running non-interactively.
 		`,
+		Example: `  bark clone git@github.com:JacobGDG/bark.git --stay
+  cd "$(bark config root)/bark/main"`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			url := args[0]

@@ -20,6 +20,40 @@ func NewRootCommand(version string) (*cobra.Command, error) {
 		Use:     "bark",
 		Version: version,
 		Short:   "Git Worktree manager",
+		Long: `Git Worktree manager.
+
+bark clones each repo as a bare git repo and checks out one git worktree per
+branch, all under a single worktree root:
+
+  <worktree-root>/
+    <repo>/
+      .git/      bare clone (no files checked out here)
+      main/      worktree for the default branch
+      <branch>/  one worktree per branch added with "bark add"
+
+Each <branch> directory is a normal git worktree: cd into it and run git as
+usual. Branch names containing "/" become nested directories
+(feature/x -> <repo>/feature/x/).
+
+Worktree root:
+  Defaults to ~/worktrees. Print the current value with:
+
+    bark config root
+
+Config file:
+  $XDG_CONFIG_HOME/bark/bark.toml (default ~/.config/bark/bark.toml), TOML.
+  Unknown keys are an error.
+
+    root_dir = "/path/to/worktrees"
+
+    [tmux]
+    startup_command = "nvim ."
+
+Side effects:
+  "clone" and "add" register the new directories with zoxide (if installed)
+  and, unless --stay is passed, create a tmux session named <repo>/<branch> and
+  switch the current tmux client to it. Pass --stay when scripting or running
+  non-interactively.`,
 	}
 
 	rootCommand.AddCommand(

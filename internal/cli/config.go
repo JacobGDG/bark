@@ -12,8 +12,15 @@ func NewConfigCommand(cfg *config.Config) *cobra.Command {
 	return &cobra.Command{
 		Use:   "config <key>",
 		Short: "Get current config values",
+		Long: `Print the current value of a config key.
 
-		Args: cobra.ExactArgs(1),
+Keys:
+  root                  worktree root directory (root_dir in bark.toml)
+  tmux.startup_command  command sent to new tmux sessions ([tmux] startup_command)`,
+		Example: `  bark config root`,
+
+		ValidArgs: []string{"root", "tmux.startup_command"},
+		Args:      cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			arg := args[0]
 
