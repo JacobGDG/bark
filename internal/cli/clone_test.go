@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/JacobGDG/bark/config"
-	"github.com/JacobGDG/bark/git"
-	"github.com/JacobGDG/bark/shell"
+	"github.com/JacobGDG/bark/internal/config"
+	"github.com/JacobGDG/bark/internal/git"
+	"github.com/JacobGDG/bark/internal/shell"
 )
 
 func TestRepoNameFromURL(t *testing.T) {

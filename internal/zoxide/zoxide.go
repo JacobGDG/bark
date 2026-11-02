@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/JacobGDG/bark/shell"
+	"github.com/JacobGDG/bark/internal/shell"
 )
 
 type Zoxide interface {

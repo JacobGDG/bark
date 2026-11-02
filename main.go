@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/JacobGDG/bark/cli"
+	"github.com/JacobGDG/bark/internal/cli"
 )
 
 func init() {

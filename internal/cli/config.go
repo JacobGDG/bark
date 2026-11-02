@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/JacobGDG/bark/config"
+	"github.com/JacobGDG/bark/internal/config"
 )
 
 func NewConfigCommand(cfg *config.Config) *cobra.Command {

@@ -1,11 +1,11 @@
 package cli
 
 import (
-	"github.com/JacobGDG/bark/config"
-	"github.com/JacobGDG/bark/git"
-	"github.com/JacobGDG/bark/shell"
-	"github.com/JacobGDG/bark/tmux"
-	"github.com/JacobGDG/bark/zoxide"
+	"github.com/JacobGDG/bark/internal/config"
+	"github.com/JacobGDG/bark/internal/git"
+	"github.com/JacobGDG/bark/internal/shell"
+	"github.com/JacobGDG/bark/internal/tmux"
+	"github.com/JacobGDG/bark/internal/zoxide"
 )
 
 // Deps is a container for all external dependencies needed for Bark to run.

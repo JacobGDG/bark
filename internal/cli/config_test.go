@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/JacobGDG/bark/config"
+	"github.com/JacobGDG/bark/internal/config"
 )
 
 func TestNewConfigCommand(t *testing.T) {

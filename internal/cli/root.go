@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/JacobGDG/bark/config"
+	"github.com/JacobGDG/bark/internal/config"
 	"github.com/spf13/cobra"
 )
 

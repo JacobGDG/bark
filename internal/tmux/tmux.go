@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/JacobGDG/bark/shell"
+	"github.com/JacobGDG/bark/internal/shell"
 )
 
 type Tmux interface {

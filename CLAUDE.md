@@ -16,16 +16,16 @@ No test suite yet. When tests are added, the convention will be `go test ./...`.
 
 **bark** is a Git worktree manager CLI. The intended workflow: clone a repo as a bare git repo, then manage multiple worktrees off it (one per branch), with optional tmux session integration.
 
-Dependency flow: `main.go` → `cli/` → `config/`
+Dependency flow: `main.go` → `internal/cli/` → `internal/config/`, `internal/{git,shell,tmux,zoxide}/`
 
-- `main.go` — wires up structured JSON logging (`log/slog`) from `$LOG_LEVEL`, then delegates entirely to `cli/`
-- `cli/root.go` — owns startup: calls `config.Load()`, constructs all subcommands via closures (dependency injection), returns `(*cobra.Command, error)`
-- `cli/clone.go` — stub; will shell out to `git clone --bare` then `git worktree add`
-- `config/config.go` — `Load()` is the single construction point for `Config`; defaults now, file-reading later. Has a `log()` method called by `Load()` to emit debug state.
+- `main.go` — wires up structured JSON logging (`log/slog`) from `$LOG_LEVEL`, then delegates entirely to `internal/cli/`
+- `internal/cli/root.go` — owns startup: calls `config.Load()`, constructs all subcommands via closures (dependency injection), returns `(*cobra.Command, error)`
+- `internal/cli/clone.go` — stub; will shell out to `git clone --bare` then `git worktree add`
+- `internal/config/config.go` — `Load()` is the single construction point for `Config`; defaults now, file-reading later. Has a `log()` method called by `Load()` to emit debug state.
 
-**Key constraint:** `main.go` does not import `config/`. Config is a CLI concern — only `cli/` depends on it.
+**Key constraint:** `main.go` does not import `internal/config/`. Config is a CLI concern — only `internal/cli/` depends on it.
 
-Planned commands (stubbed in comments in `cli/root.go`): `add`, `switch`, `purge`, `update`, `tui`, `status`.
+Planned commands (stubbed in comments in `internal/cli/root.go`): `add`, `switch`, `purge`, `update`, `tui`, `status`.
 
 ## Project Purpose & Collaboration Style
 
