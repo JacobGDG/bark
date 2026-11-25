@@ -2,6 +2,7 @@ package cli
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 
@@ -202,5 +203,93 @@ func TestAdd_E2E(t *testing.T) {
 		addCmd := NewAddCommand(deps)
 		addCmd.SetArgs([]string{"not-a-repo", "something", "--worktree-root-dir", worktreeRoot, "--stay"})
 		assert.Error(t, addCmd.Execute())
+	})
+}
+
+func TestAdd_Scripting(t *testing.T) {
+	t.Run("fetches branches pushed after clone", func(t *testing.T) {
+		deps, _, source, repoPath := clonedRepo(t)
+		runGit(t, source, "checkout", "-b", "pushed-later")
+		commitFile(t, source, "later.txt", "later")
+
+		_, err := runCmd(t, NewAddCommand(deps), "source", "pushed-later", "--stay")
+		require.NoError(t, err)
+		assert.FileExists(t, filepath.Join(repoPath, "pushed-later", "later.txt"))
+	})
+
+	t.Run("new branch starts from fresh origin default without tracking it", func(t *testing.T) {
+		deps, _, source, repoPath := clonedRepo(t)
+		commitFile(t, source, "upstream.txt", "new on main")
+
+		_, err := runCmd(t, NewAddCommand(deps), "source", "fresh", "--stay")
+		require.NoError(t, err)
+
+		worktree := filepath.Join(repoPath, "fresh")
+		assert.FileExists(t, filepath.Join(worktree, "upstream.txt"))
+		_, upstreamErr := exec.Command("git", "-C", worktree, "rev-parse", "--abbrev-ref", "@{upstream}").Output()
+		assert.Error(t, upstreamErr, "new branch should have no upstream")
+	})
+
+	t.Run("--from sets the base of a new branch", func(t *testing.T) {
+		deps, _, source, repoPath := clonedRepo(t)
+		runGit(t, source, "checkout", "-b", "base")
+		commitFile(t, source, "base.txt", "base")
+
+		_, err := runCmd(t, NewAddCommand(deps), "source", "on-base", "--from", "origin/base", "--stay")
+		require.NoError(t, err)
+		assert.FileExists(t, filepath.Join(repoPath, "on-base", "base.txt"))
+	})
+
+	t.Run("--print-path prints only the worktree path", func(t *testing.T) {
+		deps, _, _, repoPath := clonedRepo(t)
+
+		out, err := runCmd(t, NewAddCommand(deps), "source", "printed", "--stay", "--print-path")
+		require.NoError(t, err)
+		assert.Equal(t, filepath.Join(repoPath, "printed")+"\n", out)
+	})
+
+	t.Run("--on-exists=error exits with ExitWorktreeExists", func(t *testing.T) {
+		deps, _, _, _ := clonedRepo(t)
+
+		_, err := runCmd(t, NewAddCommand(deps), "source", "main", "--stay")
+		var exitErr *ExitCodeError
+		require.ErrorAs(t, err, &exitErr)
+		assert.Equal(t, ExitWorktreeExists, exitErr.Code)
+	})
+
+	t.Run("--on-exists=open returns the existing worktree", func(t *testing.T) {
+		deps, _, _, repoPath := clonedRepo(t)
+
+		out, err := runCmd(t, NewAddCommand(deps), "source", "main", "--stay", "--on-exists=open", "--print-path")
+		require.NoError(t, err)
+		assert.Equal(t, filepath.Join(repoPath, "main")+"\n", out)
+	})
+
+	t.Run("--on-exists=increment skips names in use anywhere", func(t *testing.T) {
+		deps, _, source, repoPath := clonedRepo(t)
+		// JIR-1 has a worktree, JIR-1-1 is only local, JIR-1-2 is only on origin.
+		_, err := runCmd(t, NewAddCommand(deps), "source", "JIR-1", "--stay")
+		require.NoError(t, err)
+		runGit(t, repoPath, "branch", "JIR-1-1", "main")
+		runGit(t, source, "branch", "JIR-1-2", "main")
+
+		out, err := runCmd(t, NewAddCommand(deps), "source", "JIR-1", "--stay", "--on-exists=increment", "--print-path")
+		require.NoError(t, err)
+		assert.Equal(t, filepath.Join(repoPath, "JIR-1-3")+"\n", out)
+	})
+
+	t.Run("--on-exists=increment keeps a free name as is", func(t *testing.T) {
+		deps, _, _, repoPath := clonedRepo(t)
+
+		out, err := runCmd(t, NewAddCommand(deps), "source", "unused", "--stay", "--on-exists=increment", "--print-path")
+		require.NoError(t, err)
+		assert.Equal(t, filepath.Join(repoPath, "unused")+"\n", out)
+	})
+
+	t.Run("rejects unknown --on-exists", func(t *testing.T) {
+		deps, _, _, _ := clonedRepo(t)
+
+		_, err := runCmd(t, NewAddCommand(deps), "source", "x", "--stay", "--on-exists=maybe")
+		assert.ErrorContains(t, err, "invalid --on-exists")
 	})
 }

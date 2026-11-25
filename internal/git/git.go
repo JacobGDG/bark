@@ -3,6 +3,9 @@ package git
 import (
 	"fmt"
 	"log/slog"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/JacobGDG/bark/internal/shell"
 )
@@ -21,6 +24,22 @@ type Git interface {
 	LocalBranchExists(repoPath, branch string) (bool, error)
 	// RemoteBranchExists reports whether branch exists on origin in repoPath.
 	RemoteBranchExists(repoPath, branch string) (bool, error)
+	Fetch(repoPath string) error
+	// Worktrees lists the worktrees of repoPath, excluding the bare repo itself.
+	Worktrees(repoPath string) ([]Worktree, error)
+	CommitTime(repoPath, ref string) (time.Time, error)
+	// AheadBehind counts the commits on ref that aren't on base (ahead), and
+	// the commits on base that aren't on ref (behind).
+	AheadBehind(repoPath, ref, base string) (ahead, behind int, err error)
+	IsAncestor(repoPath, ref, base string) (bool, error)
+	// ChangedFiles counts uncommitted changes, including untracked files, in a worktree.
+	ChangedFiles(worktreePath string) (int, error)
+}
+
+type Worktree struct {
+	Path string
+	// Branch is the short branch name, or empty for a detached HEAD.
+	Branch string
 }
 
 type RealGit struct {
@@ -118,4 +137,95 @@ func (g *RealGit) RemoteBranchExists(repoPath, branch string) (bool, error) {
 		return false, nil
 	}
 	return false, fmt.Errorf("could not check remote branch %s: %w", branch, err)
+}
+
+func (g *RealGit) Fetch(repoPath string) error {
+	_, err := g.shell.Run("git", "-C", repoPath, "fetch", "--prune", "origin")
+	if err != nil {
+		return fmt.Errorf("failed to fetch origin: %w", err)
+	}
+	slog.Debug("fetched origin", "repo", repoPath)
+	return nil
+}
+
+func (g *RealGit) Worktrees(repoPath string) ([]Worktree, error) {
+	out, err := g.shell.Run("git", "-C", repoPath, "worktree", "list", "--porcelain")
+	if err != nil {
+		return nil, fmt.Errorf("could not list worktrees: %w", err)
+	}
+	return parseWorktrees(out), nil
+}
+
+func parseWorktrees(out string) []Worktree {
+	var worktrees []Worktree
+	for _, record := range strings.Split(out, "\n\n") {
+		var wt Worktree
+		bare := false
+		for _, line := range strings.Split(record, "\n") {
+			key, value, _ := strings.Cut(line, " ")
+			switch key {
+			case "worktree":
+				wt.Path = value
+			case "branch":
+				wt.Branch = strings.TrimPrefix(value, "refs/heads/")
+			case "bare":
+				bare = true
+			}
+		}
+		if wt.Path != "" && !bare {
+			worktrees = append(worktrees, wt)
+		}
+	}
+	return worktrees
+}
+
+func (g *RealGit) CommitTime(repoPath, ref string) (time.Time, error) {
+	out, err := g.shell.Run("git", "-C", repoPath, "log", "-1", "--format=%cI", ref, "--")
+	if err != nil {
+		return time.Time{}, fmt.Errorf("could not read commit time of %s: %w", ref, err)
+	}
+	t, perr := time.Parse(time.RFC3339, out)
+	if perr != nil {
+		return time.Time{}, fmt.Errorf("could not parse commit time %q: %w", out, perr)
+	}
+	return t, nil
+}
+
+func (g *RealGit) AheadBehind(repoPath, ref, base string) (int, int, error) {
+	out, err := g.shell.Run("git", "-C", repoPath, "rev-list", "--left-right", "--count", ref+"..."+base)
+	if err != nil {
+		return 0, 0, fmt.Errorf("could not compare %s with %s: %w", ref, base, err)
+	}
+	fields := strings.Fields(out)
+	if len(fields) != 2 {
+		return 0, 0, fmt.Errorf("unexpected rev-list output: %q", out)
+	}
+	ahead, aerr := strconv.Atoi(fields[0])
+	behind, berr := strconv.Atoi(fields[1])
+	if aerr != nil || berr != nil {
+		return 0, 0, fmt.Errorf("unexpected rev-list output: %q", out)
+	}
+	return ahead, behind, nil
+}
+
+func (g *RealGit) IsAncestor(repoPath, ref, base string) (bool, error) {
+	_, err := g.shell.Run("git", "-C", repoPath, "merge-base", "--is-ancestor", ref, base)
+	if err == nil {
+		return true, nil
+	}
+	if err.ExitCode == 1 {
+		return false, nil
+	}
+	return false, fmt.Errorf("could not check whether %s is merged into %s: %w", ref, base, err)
+}
+
+func (g *RealGit) ChangedFiles(worktreePath string) (int, error) {
+	out, err := g.shell.Run("git", "-C", worktreePath, "status", "--porcelain")
+	if err != nil {
+		return 0, fmt.Errorf("could not read status of %s: %w", worktreePath, err)
+	}
+	if out == "" {
+		return 0, nil
+	}
+	return len(strings.Split(out, "\n")), nil
 }

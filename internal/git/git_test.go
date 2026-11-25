@@ -166,3 +166,26 @@ func TestRemoteBranchExists(t *testing.T) {
 		})
 	}
 }
+
+func TestParseWorktrees(t *testing.T) {
+	out := `worktree /root/repo/.git
+bare
+
+worktree /root/repo/main
+HEAD 1111111111111111111111111111111111111111
+branch refs/heads/main
+
+worktree /root/repo/feature/x
+HEAD 2222222222222222222222222222222222222222
+branch refs/heads/feature/x
+
+worktree /root/repo/detached
+HEAD 3333333333333333333333333333333333333333
+detached`
+
+	assert.Equal(t, []Worktree{
+		{Path: "/root/repo/main", Branch: "main"},
+		{Path: "/root/repo/feature/x", Branch: "feature/x"},
+		{Path: "/root/repo/detached", Branch: ""},
+	}, parseWorktrees(out))
+}

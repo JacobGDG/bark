@@ -10,6 +10,7 @@ import (
 
 type Tmux interface {
 	NewSession(name, dir string) error
+	HasSession(name string) bool
 	SwitchClient(name string) error
 	SendKeys(session, cmd string) error
 }
@@ -67,4 +68,13 @@ func (t *RealTmux) SwitchClient(name string) error {
 	}
 	slog.Debug("switched to tmux session", "session", name)
 	return nil
+}
+
+func (t *RealTmux) HasSession(name string) bool {
+	if !inTmuxSession() {
+		return false
+	}
+	// "=" makes tmux match the name exactly rather than as a prefix.
+	_, err := t.shell.Run("tmux", "has-session", "-t", "="+name)
+	return err == nil
 }

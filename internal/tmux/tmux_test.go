@@ -220,3 +220,47 @@ func TestSwitchClient(t *testing.T) {
 		})
 	}
 }
+
+func TestHasSession(t *testing.T) {
+	tests := []struct {
+		name      string
+		inSession bool
+		shellErr  *shell.CmdError
+		want      bool
+		wantArgs  []string
+	}{
+		{
+			name:      "session exists",
+			inSession: true,
+			want:      true,
+			wantArgs:  []string{"has-session", "-t", "=bark/main"},
+		},
+		{
+			name:      "session missing",
+			inSession: true,
+			shellErr:  &shell.CmdError{ExitCode: 1},
+			want:      false,
+			wantArgs:  []string{"has-session", "-t", "=bark/main"},
+		},
+		{
+			name:      "not in tmux",
+			inSession: false,
+			want:      false,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if test.inSession {
+				t.Setenv("TMUX", "/tmp/tmux-1000/default,1234,0")
+			} else {
+				t.Setenv("TMUX", "")
+			}
+			sh := &mockShell{err: test.shellErr}
+			tm := &RealTmux{shell: sh}
+
+			assert.Equal(t, test.want, tm.HasSession("bark/main"))
+			assert.Equal(t, test.wantArgs, sh.gotArgs)
+		})
+	}
+}

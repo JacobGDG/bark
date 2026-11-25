@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"log/slog"
 	"os"
 	"strings"
@@ -23,8 +24,8 @@ func init() {
 		handlerOptions.Level = slog.LevelWarn
 	}
 
-	var loggerHandler *slog.JSONHandler
-	loggerHandler = slog.NewJSONHandler(os.Stdout, handlerOptions)
+	// Logs go to stderr so stdout stays clean for scripts reading bark's output.
+	loggerHandler := slog.NewJSONHandler(os.Stderr, handlerOptions)
 	slog.SetDefault(slog.New(loggerHandler))
 }
 
@@ -32,8 +33,14 @@ func main() {
 	cmd, err := cli.NewRootCommand("v0.0.1")
 	if err != nil {
 		slog.Error("failed to start", "err", err)
-		os.Exit(1)
+		os.Exit(cli.ExitError)
 	}
 
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		var exitErr *cli.ExitCodeError
+		if errors.As(err, &exitErr) {
+			os.Exit(exitErr.Code)
+		}
+		os.Exit(cli.ExitError)
+	}
 }

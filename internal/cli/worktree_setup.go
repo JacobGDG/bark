@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 )
 
 // worktreeSetup holds the post-worktree-add bookkeeping shared by clone and
@@ -36,7 +37,14 @@ func finishWorktreeSetup(deps *Deps, s worktreeSetup) {
 		return
 	}
 
-	session := fmt.Sprintf("%s/%s", s.repoName, s.branch)
+	session := sessionName(s.repoName, s.branch)
+	if deps.tmux.HasSession(session) {
+		if err := deps.tmux.SwitchClient(session); err != nil {
+			slog.Error("failed to switch to tmux session", "session", session, "err", err)
+		}
+		return
+	}
+
 	if err := deps.tmux.NewSession(session, s.worktreePath); err != nil {
 		slog.Error("failed to create tmux session", "session", session, "err", err)
 		return
@@ -50,6 +58,13 @@ func finishWorktreeSetup(deps *Deps, s worktreeSetup) {
 			slog.Warn("startup command failed", "session", session, "err", err)
 		}
 	}
+}
+
+// sessionName is the tmux session for a worktree. tmux silently replaces "."
+// and ":" in session names with "_", so do the same up front; otherwise a
+// branch like "fix-1.2" gets a session that can't be found by its name.
+func sessionName(repo, branch string) string {
+	return strings.NewReplacer(".", "_", ":", "_").Replace(fmt.Sprintf("%s/%s", repo, branch))
 }
 
 func resolveWorktreeRoot(deps *Deps, override string) string {

@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,23 +13,44 @@ import (
 //TODO:
 // .env files or node_modules wont be in git but will want to be in any given worktree
 
+const (
+	onExistsError     = "error"
+	onExistsOpen      = "open"
+	onExistsIncrement = "increment"
+)
+
 func NewAddCommand(deps *Deps) *cobra.Command {
 	var stay bool
+	var printPath bool
 	var worktreeRootDir string
+	var onExists string
+	var from string
 
 	cmd := &cobra.Command{
 		Use:   "add <repo|.> <branch>",
 		Short: "Add a new worktree for an existing repo",
-		Long: `Create a worktree for <branch> at <worktree-root>/<repo>/<branch>, then open it
-in a tmux session unless --stay. Pass "." as <repo> to use the current repo.
+		Long: `Fetch origin, then create a worktree for <branch> at
+<worktree-root>/<repo>/<branch> and open it in a tmux session unless --stay.
+New branches start from origin's default branch, or --from. Pass "." as
+<repo> to use the current repo.
+
+--on-exists decides what happens when <branch> already has a worktree:
+error (exit 2), open it, or increment to the first free <branch>-N.
 
 Full manual: man bark-add`,
 		Example: `  bark add bark my-feature --stay
-  bark add . my-feature --stay   # from anywhere inside <worktree-root>/bark/`,
+  bark add . my-feature --stay   # from anywhere inside <worktree-root>/bark/
+  bark add bark JIR-123-fix-bug --on-exists=increment --print-path`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			repoArg := args[0]
 			branch := args[1]
+
+			switch onExists {
+			case onExistsError, onExistsOpen, onExistsIncrement:
+			default:
+				return fmt.Errorf("invalid --on-exists %q: want error, open or increment", onExists)
+			}
 
 			root := resolveWorktreeRoot(deps, worktreeRootDir)
 
@@ -38,32 +60,75 @@ Full manual: man bark-add`,
 			}
 
 			repoPath := filepath.Join(root, repoName)
-			worktreePath := filepath.Join(repoPath, branch)
 
-			if _, err := os.Stat(worktreePath); err == nil {
-				return fmt.Errorf("worktree already exists: %s", worktreePath)
+			// Fetch first so remote branches, and the base for new ones, are
+			// current. A failed fetch (e.g. offline) isn't fatal.
+			if err := deps.git.Fetch(repoPath); err != nil {
+				slog.Warn("fetch failed, using existing remote refs", "repo", repoPath, "err", err)
 			}
 
-			localExists, err := deps.git.LocalBranchExists(repoPath, branch)
+			worktrees, err := deps.git.Worktrees(repoPath)
 			if err != nil {
 				return err
 			}
 
-			remoteExists := false
-			if !localExists {
-				remoteExists, err = deps.git.RemoteBranchExists(repoPath, branch)
+			if onExists == onExistsIncrement {
+				branch, err = nextFreeBranch(deps, repoPath, branch, worktrees)
 				if err != nil {
 					return err
 				}
 			}
 
+			state, err := lookupBranch(deps, repoPath, branch, worktrees)
+			if err != nil {
+				return err
+			}
+
+			if state.worktree != nil {
+				if onExists != onExistsOpen {
+					return &ExitCodeError{
+						Code: ExitWorktreeExists,
+						Err:  fmt.Errorf("worktree already exists: %s", state.worktree.Path),
+					}
+				}
+
+				finishWorktreeSetup(deps, worktreeSetup{
+					repoName:     repoName,
+					repoPath:     repoPath,
+					branch:       branch,
+					worktreePath: state.worktree.Path,
+					stay:         stay,
+				})
+				if printPath {
+					fmt.Fprintln(cmd.OutOrStdout(), state.worktree.Path)
+				}
+				return nil
+			}
+
+			worktreePath := filepath.Join(repoPath, branch)
+			if _, err := os.Stat(worktreePath); err == nil {
+				return fmt.Errorf("%s already exists but isn't a worktree for %s", worktreePath, branch)
+			}
+
+			if from != "" && state.exists() {
+				slog.Warn("--from ignored: branch already exists", "branch", branch, "from", from)
+			}
+
 			switch {
-			case localExists:
+			case state.local:
 				err = deps.git.WorktreeAdd(repoPath, worktreePath, branch)
-			case remoteExists:
+			case state.remote:
 				err = deps.git.WorktreeAdd(repoPath, worktreePath, "-b", branch, "origin/"+branch)
 			default:
-				err = deps.git.WorktreeAdd(repoPath, worktreePath, "-b", branch)
+				base := from
+				if base == "" {
+					if base, err = defaultBaseRef(deps, repoPath); err != nil {
+						return err
+					}
+				}
+				// --no-track: the new branch must not adopt its base (e.g.
+				// origin/main) as upstream.
+				err = deps.git.WorktreeAdd(repoPath, worktreePath, "--no-track", "-b", branch, base)
 			}
 			if err != nil {
 				return err
@@ -74,16 +139,22 @@ Full manual: man bark-add`,
 				repoPath:     repoPath,
 				branch:       branch,
 				worktreePath: worktreePath,
-				setUpstream:  remoteExists,
+				setUpstream:  !state.local && state.remote,
 				stay:         stay,
 			})
 
+			if printPath {
+				fmt.Fprintln(cmd.OutOrStdout(), worktreePath)
+			}
 			return nil
 		},
 	}
 
 	cmd.Flags().BoolVar(&stay, "stay", false, "Skip tmux session creation after add")
+	cmd.Flags().BoolVar(&printPath, "print-path", false, "Print the worktree path to stdout")
 	cmd.Flags().StringVar(&worktreeRootDir, "worktree-root-dir", "", "Override the worktree root directory for this add")
+	cmd.Flags().StringVar(&onExists, "on-exists", onExistsError, "When the branch already has a worktree: error, open or increment")
+	cmd.Flags().StringVar(&from, "from", "", "Start a new branch from this ref instead of origin's default branch")
 	return cmd
 }
 

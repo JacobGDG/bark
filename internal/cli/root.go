@@ -26,11 +26,19 @@ under ~/worktrees by default.
 Full manual: man bark
 Each command has its own: man bark-<command>
 Config file format: man 5 bark`,
+		// Runs after argument validation, so usage is still shown for bad
+		// arguments but not for runtime failures, keeping stderr readable in
+		// scripts.
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			cmd.SilenceUsage = true
+		},
 	}
 
 	rootCommand.AddCommand(
 		NewCloneCommand(deps),
 		NewAddCommand(deps),
+		NewReposCommand(deps),
+		NewStatusCommand(deps),
 
 		NewConfigCommand(cfg),
 		// switch - start or switch to a session focussed on a given worktree
@@ -42,9 +50,6 @@ Config file format: man 5 bark`,
 		//     - if in worktree root it will show all, with keymaps to call clone, switch ect
 		//		 - if in repo root, show worktrees for given repo
 		//		 - --tmux allows opening a popup for either of the above
-		// status - fetch stats about a current/given repo
-		//        - if outdated, age, local changes, no. worktrees etc
-		//				- likely used to inform other commands
 	)
 
 	return rootCommand, nil
