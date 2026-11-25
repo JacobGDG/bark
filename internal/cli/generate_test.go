@@ -14,13 +14,13 @@ func TestGenerateFlag(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		value     string
+		args      []string
 		wantParts []string
 		wantErr   bool
 	}{
 		{
-			name:  "man prints a roff page for bark",
-			value: "man",
+			name: "man prints a roff page for bark",
+			args: []string{"--generate", "man"},
 			wantParts: []string{
 				`.TH "BARK" "1" "Jan 1970" "bark vtest" "User Commands"`,
 				".SH NAME",
@@ -29,8 +29,35 @@ func TestGenerateFlag(t *testing.T) {
 			},
 		},
 		{
+			name: "subcommand man page uses the full manual, not --help text",
+			args: []string{"add", "--generate", "man"},
+			wantParts: []string{
+				`.TH "BARK-ADD" "1"`,
+				"<repo|.> <branch>", // SYNOPSIS keeps the args from Use
+				"brand-new branch is created off the repo's current HEAD",
+			},
+		},
+		{
+			name: "every subcommand can generate a man page",
+			args: []string{"config", "--generate", "man"},
+			wantParts: []string{
+				`.TH "BARK-CONFIG" "1"`,
+				"tmux.startup_command  command sent to new tmux sessions",
+			},
+		},
+		{
 			name:    "unknown value returns error",
-			value:   "html",
+			args:    []string{"--generate", "html"},
+			wantErr: true,
+		},
+		{
+			name:    "argument validation still applies without --generate",
+			args:    []string{"add"},
+			wantErr: true,
+		},
+		{
+			name:    "unknown subcommands are still rejected",
+			args:    []string{"nope"},
 			wantErr: true,
 		},
 	}
@@ -43,7 +70,7 @@ func TestGenerateFlag(t *testing.T) {
 			var out bytes.Buffer
 			cmd.SetOut(&out)
 			cmd.SetErr(&bytes.Buffer{})
-			cmd.SetArgs([]string{"--generate", tt.value})
+			cmd.SetArgs(tt.args)
 
 			err = cmd.Execute()
 

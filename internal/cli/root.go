@@ -5,24 +5,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewRootCommand constructs the top-level "bark" command and all its subcommands.
-func NewRootCommand(version string) (*cobra.Command, error) {
-	cfg, err := config.Load()
-	if err != nil {
-		return nil, err
-	}
-	deps, err := createDeps(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	var generate string
-
-	rootCommand := &cobra.Command{
-		Use:     "bark",
-		Version: version,
-		Short:   "Git Worktree manager",
-		Long: `Git Worktree manager.
+// rootManual is the full description of bark, shown in the man page
+// (bark --generate man). The --help text is a short summary that points here.
+const rootManual = `Git Worktree manager.
 
 bark clones each repo as a bare git repo and checks out one git worktree per
 branch, all under a single worktree root:
@@ -55,16 +40,33 @@ Side effects:
   "clone" and "add" register the new directories with zoxide (if installed)
   and, unless --stay is passed, create a tmux session named <repo>/<branch> and
   switch the current tmux client to it. Pass --stay when scripting or running
-  non-interactively.`,
+  non-interactively.`
+
+// NewRootCommand constructs the top-level "bark" command and all its subcommands.
+func NewRootCommand(version string) (*cobra.Command, error) {
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, err
+	}
+	deps, err := createDeps(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	rootCommand := &cobra.Command{
+		Use:     "bark",
+		Version: version,
+		Short:   "Git Worktree manager",
+		Long: `Git Worktree manager: one bare clone per repo, one worktree per branch,
+under ~/worktrees by default.
+
+Full manual: man bark
+Each command has its own: man bark-<command>`,
+		Annotations: map[string]string{manualAnnotation: rootManual},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if generate == "" {
-				return cmd.Help()
-			}
-			return generateArtifact(cmd, generate, version, cmd.OutOrStdout())
+			return cmd.Help()
 		},
 	}
-	rootCommand.Flags().StringVar(&generate, "generate", "",
-		`Print a generated artifact to stdout and exit. Supported: "man" (roff man page, e.g. bark --generate man | man -l -)`)
 
 	rootCommand.AddCommand(
 		NewCloneCommand(deps),
@@ -84,6 +86,11 @@ Side effects:
 		//        - if outdated, age, local changes, no. worktrees etc
 		//				- likely used to inform other commands
 	)
+
+	addGenerateFlag(rootCommand, version)
+	for _, c := range rootCommand.Commands() {
+		addGenerateFlag(c, version)
+	}
 
 	return rootCommand, nil
 }

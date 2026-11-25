@@ -9,11 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-//TODO:
-// 2 types of clone, reference and dev. Clone to different places
-// clone and checkout a specific version or tag. Useful for reference
-// after clone switch open new worktree as a tmux session
-
 func NewCloneCommand(deps *Deps) *cobra.Command {
 	var stay bool
 	var worktreeRootDir string
@@ -21,7 +16,11 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "clone <url>",
 		Short: "Clone repo into worktrees root",
-		Long: `Clone a repo into the worktrees root directory, in a --bare repo and default branch worktree like so:
+		Long: `Bare-clone <url> into <worktree-root>/<repo>/ with a worktree for the default
+branch, then open it in a tmux session unless --stay.
+
+Full manual: man bark-clone`,
+		Annotations: map[string]string{manualAnnotation: `Clone a repo into the worktrees root directory, in a --bare repo and default branch worktree like so:
 
 - <worktree-root>/<repo>/
   - .git/   a --bare clone
@@ -31,8 +30,7 @@ Side effects:
 - If zoxide is installed, the <repo> and default branch directories are added to its database.
 - Unless --stay is passed, a tmux session named <repo>/<branch> is created and the
   current tmux client is switched to it, then tmux.startup_command is sent to it.
-  Pass --stay when scripting or running non-interactively.
-		`,
+  Pass --stay when scripting or running non-interactively.`},
 		Example: `  bark clone git@github.com:JacobGDG/bark.git --stay
   cd "$(bark config root)/bark/main"`,
 		Args: cobra.ExactArgs(1),
