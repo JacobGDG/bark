@@ -20,23 +20,9 @@ func NewAddCommand(deps *Deps) *cobra.Command {
 		Use:   "add <repo|.> <branch>",
 		Short: "Add a new worktree for an existing repo",
 		Long: `Create a worktree for <branch> at <worktree-root>/<repo>/<branch>, then open it
-in a tmux session unless --stay. Pass "." as <repo> to use the current repo.`,
-		Annotations: map[string]string{manualAnnotation: `Create a new worktree for <branch> inside an existing cloned repo:
+in a tmux session unless --stay. Pass "." as <repo> to use the current repo.
 
-- Pass "." as <repo> to detect the repo from the current working directory
-  (it must be somewhere inside <worktree-root>/<repo>/...).
-- Otherwise <repo> must exactly match a directory under the worktree root.
-- If <branch> already exists locally, a worktree is attached to it.
-- If <branch> exists on origin but not locally, a local branch is created tracking it.
-- Otherwise, a brand-new branch is created off the repo's current HEAD.
-
-The worktree is created at <worktree-root>/<repo>/<branch>.
-
-Side effects:
-- If zoxide is installed, the <repo> and <branch> directories are added to its database.
-- Unless --stay is passed, a tmux session named <repo>/<branch> is created and the
-  current tmux client is switched to it, then tmux.startup_command is sent to it.
-  Pass --stay when scripting or running non-interactively.`},
+Full manual: man bark-add`,
 		Example: `  bark add bark my-feature --stay
   bark add . my-feature --stay   # from anywhere inside <worktree-root>/bark/`,
 		Args: cobra.ExactArgs(2),

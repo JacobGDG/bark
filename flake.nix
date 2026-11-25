@@ -11,16 +11,19 @@
           pname = "bark";
           version = "0-unstable";
           src = ./.;
-          vendorHash = "sha256-38bWTAdoXO5qrnkPBKv5G5Qq4SJSKsoJg7Kv6FhCqPk=";
+          vendorHash = "sha256-Y28d3ojfhhok/IrOf4GVmH4vOWipNb7Clly3vdnMfg4=";
           nativeCheckInputs = [ pkgs.git ];
 
-          nativeBuildInputs = [ pkgs.installShellFiles pkgs.git ];
+          nativeBuildInputs = [ pkgs.installShellFiles pkgs.go-md2man ];
 
-          postInstall = pkgs.lib.optionalString
-            (pkgs.stdenv.buildPlatform.canExecute pkgs.stdenv.hostPlatform) ''
-              $out/bin/bark --generate man-pages
-              installManPage *.1
-            '';
+          # man/<name>.<section>.md -> <name>.<section>
+          postInstall = ''
+            shopt -s failglob # fail the build if man/ is missing from src
+            for page in man/*.md; do
+              go-md2man -in "$page" -out "''${page%.md}"
+            done
+            installManPage man/*.[0-9]
+          '';
         };
 
         devShells.default = pkgs.mkShell {
