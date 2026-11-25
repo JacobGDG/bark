@@ -20,9 +20,7 @@ func NewAddCommand(deps *Deps) *cobra.Command {
 		Use:   "add <repo|.> <branch>",
 		Short: "Add a new worktree for an existing repo",
 		Long: `Create a worktree for <branch> at <worktree-root>/<repo>/<branch>, then open it
-in a tmux session unless --stay. Pass "." as <repo> to use the current repo.
-
-Full manual: man bark-add`,
+in a tmux session unless --stay. Pass "." as <repo> to use the current repo.`,
 		Annotations: map[string]string{manualAnnotation: `Create a new worktree for <branch> inside an existing cloned repo:
 
 - Pass "." as <repo> to detect the repo from the current working directory

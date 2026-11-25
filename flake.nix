@@ -18,11 +18,8 @@
 
           postInstall = pkgs.lib.optionalString
             (pkgs.stdenv.buildPlatform.canExecute pkgs.stdenv.hostPlatform) ''
-              $out/bin/bark --generate man > bark.1
-              for cmd in add clone config; do
-                $out/bin/bark "$cmd" --generate man > "bark-$cmd.1"
-              done
-              installManPage bark*.1
+              $out/bin/bark --generate man-pages
+              installManPage *.1
             '';
         };
 

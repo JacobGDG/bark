@@ -17,9 +17,7 @@ func NewCloneCommand(deps *Deps) *cobra.Command {
 		Use:   "clone <url>",
 		Short: "Clone repo into worktrees root",
 		Long: `Bare-clone <url> into <worktree-root>/<repo>/ with a worktree for the default
-branch, then open it in a tmux session unless --stay.
-
-Full manual: man bark-clone`,
+branch, then open it in a tmux session unless --stay.`,
 		Annotations: map[string]string{manualAnnotation: `Clone a repo into the worktrees root directory, in a --bare repo and default branch worktree like so:
 
 - <worktree-root>/<repo>/

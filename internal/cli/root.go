@@ -5,8 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// rootManual is the full description of bark, shown in the man page
-// (bark --generate man). The --help text is a short summary that points here.
+// rootManual is the full description of bark, shown in bark(1).
 const rootManual = `Git Worktree manager.
 
 bark clones each repo as a bare git repo and checks out one git worktree per
@@ -58,14 +57,8 @@ func NewRootCommand(version string) (*cobra.Command, error) {
 		Version: version,
 		Short:   "Git Worktree manager",
 		Long: `Git Worktree manager: one bare clone per repo, one worktree per branch,
-under ~/worktrees by default.
-
-Full manual: man bark
-Each command has its own: man bark-<command>`,
+under ~/worktrees by default.`,
 		Annotations: map[string]string{manualAnnotation: rootManual},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return cmd.Help()
-		},
 	}
 
 	rootCommand.AddCommand(
@@ -87,10 +80,7 @@ Each command has its own: man bark-<command>`,
 		//				- likely used to inform other commands
 	)
 
-	addGenerateFlag(rootCommand, version)
-	for _, c := range rootCommand.Commands() {
-		addGenerateFlag(c, version)
-	}
+	addManPages(rootCommand)
 
 	return rootCommand, nil
 }

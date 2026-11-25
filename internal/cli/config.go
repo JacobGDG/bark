@@ -12,9 +12,7 @@ func NewConfigCommand(cfg *config.Config) *cobra.Command {
 	return &cobra.Command{
 		Use:   "config <key>",
 		Short: "Get current config values",
-		Long: `Print the current value of a config key: root or tmux.startup_command.
-
-Full manual: man bark-config`,
+		Long:  `Print the current value of a config key: root or tmux.startup_command.`,
 		Annotations: map[string]string{manualAnnotation: `Print the current value of a config key.
 
 Keys:
