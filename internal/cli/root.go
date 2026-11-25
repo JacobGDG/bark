@@ -16,6 +16,8 @@ func NewRootCommand(version string) (*cobra.Command, error) {
 		return nil, err
 	}
 
+	var generate string
+
 	rootCommand := &cobra.Command{
 		Use:     "bark",
 		Version: version,
@@ -54,7 +56,15 @@ Side effects:
   and, unless --stay is passed, create a tmux session named <repo>/<branch> and
   switch the current tmux client to it. Pass --stay when scripting or running
   non-interactively.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if generate == "" {
+				return cmd.Help()
+			}
+			return generateArtifact(cmd, generate, version, cmd.OutOrStdout())
+		},
 	}
+	rootCommand.Flags().StringVar(&generate, "generate", "",
+		`Print a generated artifact to stdout and exit. Supported: "man" (roff man page, e.g. bark --generate man | man -l -)`)
 
 	rootCommand.AddCommand(
 		NewCloneCommand(deps),
