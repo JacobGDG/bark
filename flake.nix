@@ -11,8 +11,19 @@
           pname = "bark";
           version = "0-unstable";
           src = ./.;
-          vendorHash = "sha256-Y28d3ojfhhok/IrOf4GVmH4vOWipNb7Clly3vdnMfg4=";
+          vendorHash = "sha256-38bWTAdoXO5qrnkPBKv5G5Qq4SJSKsoJg7Kv6FhCqPk=";
           nativeCheckInputs = [ pkgs.git ];
+
+          nativeBuildInputs = [ pkgs.installShellFiles pkgs.git ];
+
+          postInstall = pkgs.lib.optionalString
+            (pkgs.stdenv.buildPlatform.canExecute pkgs.stdenv.hostPlatform) ''
+              $out/bin/bark --generate man > bark.1
+              for cmd in add clone config; do
+                $out/bin/bark "$cmd" --generate man > "bark-$cmd.1"
+              done
+              installManPage bark*.1
+            '';
         };
 
         devShells.default = pkgs.mkShell {
