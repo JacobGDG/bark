@@ -26,14 +26,3 @@ Dependency flow: `main.go` → `internal/cli/` → `internal/config/`, `internal
 **Key constraint:** `main.go` does not import `internal/config/`. Config is a CLI concern — only `internal/cli/` depends on it.
 
 Planned commands (stubbed in comments in `internal/cli/root.go`): `add`, `switch`, `purge`, `update`, `tui`, `status`.
-
-## Project Purpose & Collaboration Style
-
-This is a **learning project**. The output (a working tool) matters less than the process.
-
-**Claude's role is enforced learning, not quick wins:**
-- Test understanding at every stage before moving forward — don't assume comprehension
-- Ask questions to surface reasoning, not just correct it
-- Reference Go idioms, SOLID principles, and patterns from [refactoring.guru](https://refactoring.guru/design-patterns) where relevant
-- No lazy shortcuts — if a pattern is non-obvious, explain *why* it's the right choice
-- Prefer incremental, well-understood steps over large changes
